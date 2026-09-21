@@ -8,11 +8,11 @@ export function escapeHtml(text: string): string {
 
 export function renderOutput(output: Output): string {
   if (output.output_type === 'stream') {
-    const text = Array.isArray(output.text) ? output.text.join('') : output.text;
-    return `<pre>${escapeHtml(text || '')}</pre>`;
+    const text = Array.isArray(output.text) ? output.text.join('') : (output.text ?? '');
+    return `<pre>${escapeHtml(text)}</pre>`;
   }
   if (output.output_type === 'error') {
-    return `<pre class="nb-error">${escapeHtml(output.traceback?.join('\n') || output.evalue || '')}</pre>`;
+    return `<pre class="nb-error">${escapeHtml((output.traceback?.join('\n') ?? output.evalue ?? ''))}</pre>`;
   }
   if (output.data) {
     if (output.data['image/png']) {
@@ -31,9 +31,6 @@ export function renderOutput(output: Output): string {
       const text = Array.isArray(output.data['text/plain']) ? output.data['text/plain'].join('') : output.data['text/plain'];
       return `<pre>${escapeHtml(text)}</pre>`;
     }
-  }
-  if (output.png) {
-    return `<div class="nb-output-img"><img src="data:image/png;base64,${output.png}" alt="output" /></div>`;
   }
   return '';
 }

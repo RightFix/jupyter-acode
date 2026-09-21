@@ -1,17 +1,18 @@
+export type CellType = 'code' | 'markdown' | 'raw';
+
 export interface Output {
   output_type: 'execute_result' | 'display_data' | 'stream' | 'error';
   name?: string;
   text?: string | string[];
-  data?: Record<string, string>;
+  data?: Record<string, string | string[]>;
   metadata?: Record<string, unknown>;
   execution_count?: number | null;
   traceback?: string[];
   evalue?: string;
-  image?: string;
 }
 
 export interface Cell {
-  cell_type: 'code' | 'markdown' | 'raw';
+  cell_type: CellType;
   source: string[];
   metadata: Record<string, unknown>;
   outputs?: Output[];

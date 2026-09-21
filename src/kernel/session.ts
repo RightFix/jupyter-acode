@@ -9,22 +9,20 @@ export class PythonSession {
   }
 
   async start(): Promise<void> {
-    const terminal = await acode.require('terminal') as {
-      create: (opts: { name: string }) => Promise<{ id: string }>;
-      write: (id: string, content: string) => Promise<void>;
-    };
-    this.terminalId = (await terminal.create({ name: 'Jupyter Kernel' })).id;
+    const terminal = acode.require('terminal') as TerminalModule;
+    const t = await terminal.create({ name: 'Jupyter Kernel' });
+    this.terminalId = t.id;
     await terminal.write(this.terminalId, 'python3 -i\r\n');
   }
 
   async stop(): Promise<void> {
     try {
       if (this.terminalId) {
-        const terminal = await acode.require('terminal') as { write: (id: string, c: string) => Promise<void> };
+        const terminal = acode.require('terminal') as TerminalModule;
         await terminal.write(this.terminalId, 'exit()\r\n');
       }
-      this.terminalId = null;
-    } catch {}
+    } catch { /* ignore */ }
+    this.terminalId = null;
   }
 
   async restart(): Promise<void> {
@@ -40,7 +38,7 @@ export class PythonSession {
       };
     }
     try {
-      const terminal = await acode.require('terminal') as { write: (id: string, c: string) => Promise<void> };
+      const terminal = acode.require('terminal') as TerminalModule;
       await terminal.write(this.terminalId, code + '\nprint("__AKODE_DONE__")\r\n');
       return { outputs: [], execution_count: null };
     } catch (e) {

@@ -11,27 +11,32 @@ export function sanitizeMarkdown(html: string): string {
   const temp = document.createElement('div');
   temp.innerHTML = html;
 
-  const walk = (node: Node) => {
+  const walk = (node: Node): void => {
     if (node.nodeType === Node.TEXT_NODE) return;
-    if (node.nodeType !== Node.ELEMENT_NODE) { node.remove(); return; }
-    const tagName = (node as Element).tagName.toLowerCase();
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      node.parentNode?.removeChild(node);
+      return;
+    }
+    const el = node as Element;
+    const tagName = el.tagName.toLowerCase();
     if (!ALLOWED_TAGS.includes(tagName)) {
-      node.replaceWith((node as Text).textContent ?? '');
+      const text = el.textContent ?? '';
+      el.parentNode?.replaceChild(document.createTextNode(text), el);
       return;
     }
     const attrs = ALLOWED_ATTRS[tagName] ?? [];
-    for (const attr of Array.from((node as Element).attributes)) {
-      if (!attrs.includes(attr.name)) (node as Element).removeAttribute(attr.name);
+    for (const attr of Array.from(el.attributes)) {
+      if (!attrs.includes(attr.name)) el.removeAttribute(attr.name);
     }
     if (tagName === 'a') {
-      const href = (node as Element).getAttribute('href');
-      if (href && !href.match(/^(https?:|mailto:|tel:)/i)) (node as Element).removeAttribute('href');
+      const href = el.getAttribute('href');
+      if (href && !href.match(/^(https?:|mailto:|tel:)/i)) el.removeAttribute('href');
     }
     if (tagName === 'img') {
-      const src = (node as Element).getAttribute('src');
-      if (src && !src.match(/^data:/i) && !src.match(/^https?:/i)) (node as Element).removeAttribute('src');
+      const src = el.getAttribute('src');
+      if (src && !src.match(/^data:/i) && !src.match(/^https?:/i)) el.removeAttribute('src');
     }
-    Array.from((node as Element).childNodes).forEach(walk);
+    Array.from(el.childNodes).forEach(walk);
   };
 
   Array.from(temp.childNodes).forEach(walk);
