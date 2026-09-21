@@ -20,7 +20,7 @@ interface TerminalModule {
   write(id: string, content: string): Promise<void>;
 }
 
-interface EditorFile {
+interface EditorFileTab {
   uri: string;
   filename: string;
   isUnsaved: boolean;
@@ -29,8 +29,9 @@ interface EditorFile {
 interface EditorManager {
   isCodeMirror: boolean;
   activeFile?: { path?: string; filename?: string } | null;
-  files?: EditorFile[];
-  getFile?(test: string, type: 'uri' | 'id' | 'name'): EditorFile;
+  files?: EditorFileTab[];
+  getFile?(test: string, type: 'uri' | 'id' | 'name'): EditorFileTab;
+  addFile?(file: EditorFileTab): void;
   on(event: string, callback: (...args: any[]) => void): void;
   off(event: string, callback: (...args: any[]) => void): void;
   editor?: {

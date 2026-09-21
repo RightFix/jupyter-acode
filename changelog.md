@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased] - Notebook Tabs in Active Files
+
+- Open notebooks now live in a real Acode editor tab (custom `EditorFile` with the notebook UI as tab content) instead of a floating overlay — they appear in the file list, switch like normal files, and close like normal files.
+- Single-tab policy: one notebook tab follows the current file (matches the single-kernel model, no orphaned UIs).
+- Save As retitles the tab and re-points its URI; closing the tab snapshots a backup and clears plugin state.
+- Native-tab conflict warning now ignores our own tab (no more false positives).
+- Harness at 27 assertions (tab hosting, reuse, retitle, close cleanup).
+
+## [Unreleased] - Header Button & Style Loading
+
+- Single `+` button in Acode's top header bar: opens New notebook / Open notebook dialog (`src/ui/headerButtons.ts`).
+- Header button self-repairs via MutationObserver if Acode re-renders the header; removed cleanly on plugin unload.
+- Fix styles never being applied: `styles.css` was a dropped side-effect import; now injected as a `<style>` tag on init.
+- Harness extended to 19 assertions (style inject/remove, header button new/open/remove).
+
 ## [Unreleased] - Edit Safety: Auto-save, Backups, Conflict Detection
 
 - Auto-save ON by default (2.5 s debounce, skips while kernel runs); toggle via `jupyter-toggle-autosave`, preference persisted.

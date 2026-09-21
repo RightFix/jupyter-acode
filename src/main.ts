@@ -1,9 +1,11 @@
 import plugin from '../plugin.json';
-import './styles.css';
+import notebookCss from './styles.css';
 import { NotebookData } from './types';
 import { createNewNotebook, loadNotebook, saveNotebook } from './nbformat';
 import { PythonSession } from './kernel/session';
 import { NotebookUI } from './ui/notebook';
+import { NotebookTabs } from './ui/tabs';
+import { HeaderButtons } from './ui/headerButtons';
 import { FileHandler } from './ui/filehandler';
 import { registerCommands, removeCommands } from './ui/toolbar';
 
@@ -54,8 +56,12 @@ class JupyterPlugin {
   private saveInProgress = false;
   private lastSelfSaveAt = 0;
   private warnedNativeTabs = new Set<string>();
+  private tabs = new NotebookTabs((uri) => this.onTabClose(uri));
+  private headerButtons: HeaderButtons | null = null;
+  private styleEl: HTMLStyleElement | null = null;
   private switchFileHook: ((file: { uri: string }) => void) | null = null;
   private externalSaveHook: ((file: { uri: string }) => void) | null = null;
+  private removeFileHook: ((file: { uri: string }) => void) | null = null;
 
   async init(): Promise<void> {
     const win = window as Window & { acode?: AcodeModule; editorManager?: EditorManager };
@@ -64,9 +70,31 @@ class JupyterPlugin {
 
     this.session = null; // lazy-started on first run via ensureSession()
     this.autosaveEnabled = this.loadAutosavePref();
+    this.injectStyles();
     this.fileHandler = new FileHandler(plugin.id, (info) => this.openFile(info.uri, info.name));
     this.registerAllCommands();
+    this.headerButtons = new HeaderButtons({
+      onNew: () => this.newNotebook(),
+      onOpen: () => this.openPicker(),
+    });
+    this.headerButtons.mount();
     this.setupEditorHooks();
+  }
+
+  private injectStyles(): void {
+    if (this.styleEl) return;
+    try {
+      const el = document.createElement('style');
+      el.setAttribute('data-jupyter', 'true');
+      el.textContent = notebookCss;
+      document.head.appendChild(el);
+      this.styleEl = el;
+    } catch { /* DOM unavailable — ignore */ }
+  }
+
+  private removeStyles(): void {
+    try { this.styleEl?.remove(); } catch { /* ignore */ }
+    this.styleEl = null;
   }
 
   private registerAllCommands(): void {
@@ -102,6 +130,7 @@ class JupyterPlugin {
   private mountNotebook(data: NotebookData, uri: string | null, filename: string): void {
     this.clearTimers();
     this.ui?.remove();
+    const host = this.tabs.open(uri, filename);
     this.currentFile = uri;
     this.currentFileName = filename;
     this.isModified = false;
@@ -115,7 +144,7 @@ class JupyterPlugin {
       onModified: () => this.markModified(),
       onSelectCell: () => {},
     });
-    this.ui.mount();
+    this.ui.mount(host);
     this.ui.setFilename(filename);
     this.ui.setDirty(false);
     this.ui.setAutosave(this.autosaveEnabled);
@@ -238,6 +267,8 @@ class JupyterPlugin {
       const fileUrl = await dirFs.createFile(name, json);
       this.currentFile = fileUrl || `${folderUrl.replace(/\/$/, '')}/${name}`;
       this.currentFileName = name;
+      this.tabs.setUri(this.currentFile);
+      this.tabs.retitle(name);
       this.ui.setFilename(name);
       this.lastSelfSaveAt = Date.now();
       this.knownMtime = await this.statMtime(this.currentFile);
@@ -429,6 +460,7 @@ class JupyterPlugin {
   }
 
   private async warnIfNativeTabOpen(uri: string): Promise<void> {
+    if (this.tabs.has(uri)) return; // our own notebook tab — not a conflict
     if (this.warnedNativeTabs.has(uri)) return;
     this.warnedNativeTabs.add(uri);
     try {
@@ -486,6 +518,17 @@ class JupyterPlugin {
     acode.toast?.('Kernel interrupted (restarted — state was cleared)');
   }
 
+  private onTabClose(uri: string | null): void {
+    this.snapshotBackup(); // keep emergency copy of the closed notebook
+    if (uri !== this.currentFile) return;
+    this.clearTimers();
+    this.ui = null;
+    this.currentFile = null;
+    this.currentFileName = null;
+    this.isModified = false;
+    this.knownMtime = null;
+  }
+
   private setupEditorHooks(): void {
     try {
       this.switchFileHook = (file: { uri: string }) => {
@@ -495,18 +538,28 @@ class JupyterPlugin {
       editorManager.on('switch-file', this.switchFileHook);
       this.externalSaveHook = (file: { uri: string }) => this.onExternalSave(file);
       editorManager.on('save-file', this.externalSaveHook);
+      this.removeFileHook = (file: { uri: string }) => {
+        if (file && file.uri === this.currentFile) this.onTabClose(file.uri);
+      };
+      editorManager.on('remove-file', this.removeFileHook);
     } catch (e) { console.warn('Jupyter: editor hooks failed', e); }
   }
 
   async destroy(): Promise<void> {
     this.snapshotBackup(); // emergency copy of unsaved edits for next open
     this.clearTimers();
+    try { this.headerButtons?.unmount(); } catch { /* ignore */ }
+    this.headerButtons = null;
+    this.removeStyles();
     try { this.fileHandler?.unregister(); } catch { /* ignore */ }
     if (this.switchFileHook) {
       try { editorManager.off('switch-file', this.switchFileHook); } catch { /* ignore */ }
     }
     if (this.externalSaveHook) {
       try { editorManager.off('save-file', this.externalSaveHook); } catch { /* ignore */ }
+    }
+    if (this.removeFileHook) {
+      try { editorManager.off('remove-file', this.removeFileHook); } catch { /* ignore */ }
     }
     removeCommands(COMMAND_NAMES);
     await this.session?.stop();

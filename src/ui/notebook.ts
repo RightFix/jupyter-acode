@@ -17,6 +17,7 @@ export class NotebookUI {
   public selectedIndex = -1;
   private $container: HTMLElement | null = null;
   private $cells: HTMLElement | null = null;
+  private overlay = false;
   private data: NotebookData;
   private cbs: NotebookCallbacks;
 
@@ -115,12 +116,12 @@ export class NotebookUI {
     this.cbs.onModified();
   }
 
-  mount(): void { this.render(); }
+  mount(host?: HTMLElement | null): void { this.render(host ?? null); }
 
   remove(): void {
     this.$container?.remove();
     this.$container = null;
-    this.showNativeEditor();
+    if (this.overlay) this.showNativeEditor();
   }
 
   show(): void { if (this.$container) this.$container.style.display = ''; }
@@ -155,16 +156,20 @@ export class NotebookUI {
     (el as HTMLElement).title = on ? 'Notebook saves automatically' : 'Automatic saving is off';
   }
 
-  private render(): void {
-    const existing = document.querySelector('.jupyter-notebook-wrapper');
-    existing?.remove();
-    const header = document.querySelector('header') || document.querySelector('.header') || document.querySelector('#header');
-    const headerHeight = header ? (header as HTMLElement).offsetHeight : 44;
+  private render(host?: HTMLElement | null): void {
     const toolbarHeight = 50;
 
     const wrapper = document.createElement('div');
     wrapper.className = 'jupyter-notebook-wrapper';
-    wrapper.style.cssText = `position:absolute;top:${headerHeight}px;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:var(--theme-surface,#fff);z-index:1;`;
+    if (host) {
+      this.overlay = false;
+      wrapper.style.cssText = 'display:flex;flex-direction:column;height:100%;background:var(--theme-surface,#fff);box-sizing:border-box;';
+    } else {
+      this.overlay = true;
+      const header = document.querySelector('header') || document.querySelector('.header') || document.querySelector('#header');
+      const headerHeight = header ? (header as HTMLElement).offsetHeight : 44;
+      wrapper.style.cssText = `position:absolute;top:${headerHeight}px;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:var(--theme-surface,#fff);z-index:1;`;
+    }
 
     wrapper.innerHTML = `
       <div class="nb-toolbar" style="flex-shrink:0;height:${toolbarHeight}px;min-height:${toolbarHeight}px">
@@ -193,8 +198,12 @@ export class NotebookUI {
     this.$container = wrapper;
     this.$cells = wrapper.querySelector('.nb-cells');
     this.renderCells();
-    document.querySelector('main')?.appendChild(wrapper);
-    this.hideNativeEditor();
+    if (host) {
+      host.appendChild(wrapper);
+    } else {
+      document.querySelector('main')?.appendChild(wrapper);
+      this.hideNativeEditor();
+    }
   }
 
   private runAllCodeCells(): void {
