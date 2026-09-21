@@ -39,8 +39,13 @@ interface AcodeModule {
   removeCommand?: (name: string) => void;
   registerFileHandler?(id: string, handler: { extensions: string[]; handleFile: (fileInfo: any) => void | Promise<void> }): void;
   unregisterFileHandler?(id: string): void;
-  fileBrowser?(type: string, title: string): Promise<{ url: string; filename?: string }>;
-  fsOperation?(path: string): { readFile(encoding: string): Promise<string>; writeFile(content: string): Promise<void> };
+  fileBrowser?(mode: 'file' | 'folder' | 'both', title: string): Promise<{ type: 'file' | 'folder'; url: string; name: string; filename?: string }>;
+  fsOperation?(path: string): {
+    readFile(encoding: string): Promise<string>;
+    writeFile(content: string): Promise<void>;
+    createFile?(name: string, content?: string): Promise<string>;
+    exists?(): Promise<boolean>;
+  };
   loader?: { create(msg: string, sub: string): { show(): void; hide(): void } };
   toast?: (msg: string, duration?: number) => void;
   alert?: (title: string, msg: string) => void;

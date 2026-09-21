@@ -31,3 +31,17 @@ export function saveNotebook(data: NotebookData): string {
     2
   );
 }
+
+export function createNewNotebook(): NotebookData {
+  return {
+    cells: [
+      { cell_type: 'code', source: [], metadata: {}, outputs: [], execution_count: null },
+    ],
+    metadata: {
+      kernelspec: { display_name: 'Python 3', language: 'python', name: 'python3' },
+      language_info: { name: 'python', version: '3' },
+    },
+    nbformat: 4,
+    nbformat_minor: 5,
+  };
+}

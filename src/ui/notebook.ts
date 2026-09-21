@@ -4,6 +4,7 @@ import { renderOutputs } from '../render/outputs';
 
 export interface NotebookCallbacks {
   onRunCell: (index: number) => void | Promise<void>;
+  onNewNotebook: () => void;
   onDeleteCell: () => void;
   onMoveCell: (dir: number) => void;
   onToggleType: () => void;
@@ -138,6 +139,7 @@ export class NotebookUI {
 
     wrapper.innerHTML = `
       <div class="nb-toolbar" style="flex-shrink:0;height:${toolbarHeight}px;min-height:${toolbarHeight}px">
+        <button class="nb-btn new-nb">+ New</button>
         <button class="nb-btn add-code">+ Code</button>
         <button class="nb-btn add-md">+ Markdown</button>
         <button class="nb-btn run-all">Run All</button>
@@ -149,6 +151,7 @@ export class NotebookUI {
       <div class="nb-cells" style="flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:8px;box-sizing:border-box"></div>
     `;
 
+    (wrapper.querySelector('.new-nb') as HTMLElement).onclick = () => this.cbs.onNewNotebook();
     (wrapper.querySelector('.add-code') as HTMLElement).onclick = () => this.addCell('code');
     (wrapper.querySelector('.add-md') as HTMLElement).onclick = () => this.addCell('markdown');
     (wrapper.querySelector('.run-all') as HTMLElement).onclick = () => this.runAllCodeCells();
