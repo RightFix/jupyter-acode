@@ -46,6 +46,18 @@ export class NotebookUI {
     if (el) el.innerHTML = count !== null ? `In&nbsp;[${count}]:` : 'In&nbsp;[ ]:';
   }
 
+  setRunning(index: number): void {
+    const el = this.$cells?.querySelector(`[data-index="${index}"]`);
+    if (!el) return;
+    const prompt = el.querySelector('.nb-prompt') as HTMLElement | null;
+    if (prompt) prompt.innerHTML = 'In&nbsp;[*]:';
+    el.querySelector('.nb-outputs')?.remove();
+    const running = document.createElement('div');
+    running.className = 'nb-outputs';
+    running.innerHTML = '<div class="nb-output nb-running">Running...</div>';
+    el.appendChild(running);
+  }
+
   clearOutputs(): void {
     this.data.cells.forEach(c => {
       if (c.cell_type === 'code') { c.outputs = []; c.execution_count = null; }

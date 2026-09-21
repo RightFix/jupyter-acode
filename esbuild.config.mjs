@@ -20,6 +20,7 @@ const buildOptions = {
     '.json': 'json',
     '.ts': 'ts',
     '.css': 'text',
+    '.py': 'text',
   },
   define: {
     'process.env.NODE_ENV': isServe ? '"development"' : '"production"',
@@ -33,8 +34,9 @@ async function createZip() {
     'plugin.json',
     'main.js',
     'readme.md',
-    'changelogs.md',
-    'icon.svg',
+    'changelog.md',
+    'LICENSE',
+    'icon.png',
   ];
 
   for (const file of files) {

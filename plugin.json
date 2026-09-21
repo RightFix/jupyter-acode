@@ -5,7 +5,7 @@
   "main": "main.js",
   "version": "1.0.0",
   "repository": "https://github.com/RightFix/jupyter-acode.git",
-  "icon": "icon.svg",
+  "icon": "icon.png",
   "minVersionCode": 290,
   "license": "AGPL-3.0",
   "keywords": ["jupyter", "notebook", "ipynb", "python", "data science","data analysis", "AI","ML", "Machine learning"],

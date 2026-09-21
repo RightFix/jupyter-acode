@@ -1,78 +1,120 @@
 #!/usr/bin/env python3
-"""Helper script for persistent Jupyter kernel sessions."""
+"""Persistent kernel helper for jupyter-acode.
+
+Speaks a JSON-lines protocol over stdio (driven by Acode's Executor.start):
+
+  request:  {"id": <int>, "code": "<base64 utf-8 source>"}
+  response: {"id": <int>, "execution_count": <int>, "outputs": [...]}
+
+  request:  {"id": <int>, "cmd": "ping"}
+  response: {"id": <int>, "status": "pong"}
+
+Each response is exactly one stdout line: user prints are captured via
+redirect_stdout, so framing is trivial. All user code execs in one shared
+``NS`` dict, giving notebook-style shared state across cells.
+
+Matplotlib (if installed) uses the Agg backend; open figures are saved as
+base64 PNG ``display_data`` outputs after each cell. ``plt.show()`` is a
+no-op so it never blocks or warns.
+"""
 import sys
 import json
 import base64
 import io
+import traceback
 import contextlib
 
-# Use Agg backend so plots don't try to open a display
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+try:
+    import matplotlib
 
-# Global execution namespace so variables persist between cells
-_NAMESPACE = {}
-_EXECUTION_COUNT = 0
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
 
-def run_code(code: str) -> dict:
-    global _EXECUTION_COUNT
-    _EXECUTION_COUNT += 1
+    plt.show = lambda *a, **k: None  # noqa: E731 - never block on show()
+    HAS_MPL = True
+except Exception:
+    plt = None  # type: ignore
+    HAS_MPL = False
 
-    stdout_capture = io.StringIO()
-    stderr_capture = io.StringIO()
-    outputs = []
+NS = {}
+COUNT = 0
 
-    with contextlib.redirect_stdout(stdout_capture), contextlib.redirect_stderr(stderr_capture):
+
+def _collect_figures():
+    images = []
+    if not HAS_MPL:
+        return images
+    try:
+        for num in plt.get_fignums():
+            fig = plt.figure(num)
+            buf = io.BytesIO()
+            fig.savefig(buf, format="png", bbox_inches="tight", dpi=100)
+            buf.seek(0)
+            images.append(base64.b64encode(buf.read()).decode("ascii"))
+            plt.close(fig)
+    except Exception:
+        pass
+    return images
+
+
+def run_code(code_b64):
+    global COUNT
+    COUNT += 1
+    try:
+        code = base64.b64decode(code_b64).decode("utf-8")
+    except Exception as e:
+        return {
+            "execution_count": COUNT,
+            "outputs": [
+                {
+                    "output_type": "error",
+                    "evalue": "Failed to decode cell: %s" % e,
+                    "traceback": ["Failed to decode cell: %s" % e],
+                }
+            ],
+        }
+
+    out = io.StringIO()
+    err = io.StringIO()
+    tb = None
+    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
         try:
-            compiled = compile(code, '<cell>', 'exec')
-            exec(compiled, _NAMESPACE)
+            exec(compile(code, "<cell>", "exec"), NS)  # noqa: S102 - intentional
         except SystemExit:
             pass
+        except Exception:
+            tb = traceback.format_exc()
 
-    stdout_val = stdout_capture.getvalue()
-    stderr_val = stderr_capture.getvalue()
+    outputs = []
+    stdout_val = out.getvalue()
+    if stdout_val:
+        outputs.append(
+            {"output_type": "stream", "name": "stdout", "text": stdout_val}
+        )
+    stderr_val = err.getvalue()
+    if stderr_val:
+        outputs.append(
+            {"output_type": "stream", "name": "stderr", "text": stderr_val}
+        )
+    for img in _collect_figures():
+        outputs.append(
+            {
+                "output_type": "display_data",
+                "data": {"image/png": img},
+                "metadata": {},
+            }
+        )
+    if tb is not None:
+        lines = tb.strip().split("\n")
+        outputs.append(
+            {
+                "output_type": "error",
+                "evalue": lines[-1] if lines else "Error",
+                "traceback": lines,
+            }
+        )
+    return {"execution_count": COUNT, "outputs": outputs}
 
-    # Check for matplotlib figures
-    figs = plt.get_fignums()
-    images = []
-    for fig_num in figs:
-        fig = plt.figure(fig_num)
-        buf = io.BytesIO()
-        fig.savefig(buf, format='png', bbox_inches='tight', dpi=100)
-        buf.seek(0)
-        images.append(base64.b64encode(buf.read()).decode('ascii'))
-        plt.close(fig)
-
-    # Stream output
-    if stdout_val.strip():
-        outputs.append({
-            'output_type': 'stream',
-            'name': 'stdout',
-            'text': stdout_val
-        })
-
-    # Error output
-    if stderr_val.strip():
-        lines = stderr_val.strip().split('\n')
-        outputs.append({
-            'output_type': 'error',
-            'evalue': lines[-1] if lines else 'Error',
-            'traceback': lines
-        })
-
-    # Plot outputs
-    for img_b64 in images:
-        outputs.append({
-            'output_type': 'display_data',
-            'data': {'image/png': img_b64},
-            'metadata': {}
-        })
-
-    return {
-        'outputs': outputs,
-        'execution_count': _EXECUTION_COUNT
-    }
 
 def main():
     for line in sys.stdin:
@@ -80,25 +122,55 @@ def main():
         if not line:
             continue
         try:
-            data = json.loads(line)
-            code = data.get('code', '')
-            if code == '__PING__':
-                sys.stdout.write(json.dumps({'status': 'pong'}) + '\n')
-                sys.stdout.flush()
-                continue
-            result = run_code(code)
-            sys.stdout.write(json.dumps(result) + '\n')
-            sys.stdout.flush()
+            req = json.loads(line)
         except Exception as e:
-            sys.stdout.write(json.dumps({
-                'outputs': [{
-                    'output_type': 'error',
-                    'evalue': str(e),
-                    'traceback': [str(e)]
-                }],
-                'execution_count': _EXECUTION_COUNT
-            }) + '\n')
+            sys.stdout.write(
+                json.dumps(
+                    {
+                        "id": None,
+                        "outputs": [
+                            {
+                                "output_type": "error",
+                                "evalue": "Bad request: %s" % e,
+                                "traceback": ["Bad request: %s" % e],
+                            }
+                        ],
+                        "execution_count": COUNT,
+                    }
+                )
+                + "\n"
+            )
+            sys.stdout.flush()
+            continue
+        rid = req.get("id")
+        if req.get("cmd") == "ping":
+            sys.stdout.write(json.dumps({"id": rid, "status": "pong"}) + "\n")
+            sys.stdout.flush()
+            continue
+        try:
+            result = run_code(req.get("code", ""))
+            result["id"] = rid
+            sys.stdout.write(json.dumps(result) + "\n")
+            sys.stdout.flush()
+        except Exception as e:  # never let the loop die
+            sys.stdout.write(
+                json.dumps(
+                    {
+                        "id": rid,
+                        "outputs": [
+                            {
+                                "output_type": "error",
+                                "evalue": str(e),
+                                "traceback": [str(e)],
+                            }
+                        ],
+                        "execution_count": COUNT,
+                    }
+                )
+                + "\n"
+            )
             sys.stdout.flush()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

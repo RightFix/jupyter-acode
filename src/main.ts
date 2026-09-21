@@ -1,8 +1,8 @@
 import plugin from '../plugin.json';
 import './styles.css';
-import { CellType, NotebookData } from './types';
+import { NotebookData } from './types';
 import { loadNotebook, saveNotebook } from './nbformat';
-import { PythonSession, nextExecCount } from './kernel/session';
+import { PythonSession } from './kernel/session';
 import { NotebookUI } from './ui/notebook';
 import { FileHandler } from './ui/filehandler';
 import { registerCommands, removeCommands } from './ui/toolbar';
@@ -11,7 +11,8 @@ const COMMAND_NAMES = [
   'jupyter-open', 'jupyter-add-code', 'jupyter-add-markdown',
   'jupyter-delete-cell', 'jupyter-move-up', 'jupyter-move-down',
   'jupyter-save', 'jupyter-run-cell', 'jupyter-run-all',
-  'jupyter-toggle-type', 'jupyter-restart-kernel', 'jupyter-clear-outputs',
+  'jupyter-toggle-type', 'jupyter-restart-kernel', 'jupyter-interrupt-kernel',
+  'jupyter-clear-outputs',
 ];
 
 class JupyterPlugin {
@@ -28,7 +29,7 @@ class JupyterPlugin {
     (globalThis as any).acode = win.acode;
     (globalThis as any).editorManager = win.editorManager;
 
-    this.session = new PythonSession();
+    this.session = null; // lazy-started on first run via ensureSession()
     this.fileHandler = new FileHandler(plugin.id, (info) => this.openFile(info.uri, info.name));
     this.registerAllCommands();
     this.setupEditorHooks();
@@ -47,7 +48,8 @@ class JupyterPlugin {
       { name: COMMAND_NAMES[8], description: 'Run All Cells', exec: () => this.runAll() },
       { name: COMMAND_NAMES[9], description: 'Toggle Cell Type', exec: () => this.ui?.toggleType() },
       { name: COMMAND_NAMES[10], description: 'Restart Kernel', exec: () => this.restartKernel() },
-      { name: COMMAND_NAMES[11], description: 'Clear All Outputs', exec: () => this.ui?.clearOutputs() },
+      { name: COMMAND_NAMES[11], description: 'Interrupt Kernel', exec: () => this.interruptKernel() },
+      { name: COMMAND_NAMES[12], description: 'Clear All Outputs', exec: () => this.ui?.clearOutputs() },
     ]);
   }
 
@@ -84,17 +86,18 @@ class JupyterPlugin {
   }
 
   private async runCellAt(index: number): Promise<void> {
-    if (!this.session || !this.ui || !this.currentFile) return;
+    if (!this.ui || !this.currentFile) return;
     const cell = this.ui.getCell(index);
     if (!cell || cell.cell_type !== 'code') return;
     const code = this.ui.getSource(index);
     if (!code.trim()) return;
 
+    this.ui.setRunning(index);
     try {
-      const result = await this.session.run(code);
-      const count = nextExecCount();
-      this.ui.setOutputs(index, result.outputs, count);
-      this.ui.setPrompt(index, count);
+      await this.ensureSession();
+      const result = await this.session!.run(code);
+      this.ui.setOutputs(index, result.outputs, result.execution_count);
+      this.ui.setPrompt(index, result.execution_count);
       this.isModified = true;
     } catch (e) {
       this.ui.setOutputs(index, [{ output_type: 'error', evalue: String(e), traceback: [String(e)] }], null);
@@ -125,11 +128,28 @@ class JupyterPlugin {
     } catch (e) { acode.alert?.('Error', `Failed to save: ${String(e)}`); }
   }
 
+  private async ensureSession(): Promise<void> {
+    if (!this.session) this.session = new PythonSession();
+    if (this.session.isRunning()) return;
+    const check = await PythonSession.isBackendAvailable();
+    if (!check.ok) throw new Error(check.reason ?? 'Terminal backend unavailable');
+    await this.session.start();
+  }
+
   private async restartKernel(): Promise<void> {
     if (this.session) await this.session.stop();
     this.session = new PythonSession();
     this.ui?.clearOutputs();
     acode.toast?.('Kernel restarted');
+  }
+
+  private async interruptKernel(): Promise<void> {
+    if (!this.session?.isRunning()) {
+      acode.toast?.('Kernel is not running');
+      return;
+    }
+    await this.session.interrupt();
+    acode.toast?.('Kernel interrupted (restarted — state was cleared)');
   }
 
   private setupEditorHooks(): void {

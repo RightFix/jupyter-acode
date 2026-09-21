@@ -51,7 +51,34 @@ interface AcodeModule {
 declare let acode: AcodeModule;
 declare let editorManager: EditorManager;
 
+type ExecutorOutputType = 'stdout' | 'stderr' | 'exit' | 'unknown';
+type ExecutorOutputCallback = (type: ExecutorOutputType, data: string) => void;
+
+interface Executor {
+  readonly ExecutorType: 'Executor' | 'BackgroundExecutor';
+  BackgroundExecutor: Executor;
+  start(command: string, onData: ExecutorOutputCallback, alpine?: boolean): Promise<string>;
+  write(uuid: string, input: string): Promise<string>;
+  stop(uuid: string): Promise<string>;
+  isRunning(uuid: string): Promise<boolean>;
+  execute(command: string, alpine?: boolean): Promise<string>;
+}
+
+declare const Executor: Executor | undefined;
+
+interface NativeTerminal {
+  isInstalled(): Promise<boolean>;
+  isSupported(): Promise<boolean>;
+}
+
+declare const Terminal: NativeTerminal | undefined;
+
 declare module '*.css' {
+  const content: string;
+  export default content;
+}
+
+declare module '*.py' {
   const content: string;
   export default content;
 }
