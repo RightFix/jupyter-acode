@@ -32,6 +32,33 @@
 
 .nb-btn:hover { background: var(--theme-surface-variant, #e8e8e8); }
 
+.nb-btn.save.dirty {
+  border-color: #e0a800;
+  font-weight: bold;
+}
+
+.nb-filename {
+  align-self: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--theme-color-dim, #666);
+  margin-right: 4px;
+  max-width: 40vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nb-filename.dirty { color: #e0a800; }
+
+.nb-autosave {
+  align-self: center;
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--theme-color-dim, #888);
+  white-space: nowrap;
+}
+
 .nb-cells { 
   padding: 8px; 
   box-sizing: border-box;

@@ -126,6 +126,35 @@ export class NotebookUI {
   show(): void { if (this.$container) this.$container.style.display = ''; }
   hide(): void { if (this.$container) this.$container.style.display = 'none'; }
 
+  setFilename(name: string): void {
+    const el = this.$container?.querySelector('.nb-filename');
+    if (el) {
+      el.textContent = name;
+      (el as HTMLElement).title = name;
+    }
+  }
+
+  setDirty(dirty: boolean): void {
+    const nameEl = this.$container?.querySelector('.nb-filename');
+    if (nameEl) {
+      const base = nameEl.textContent?.replace(/^● /, '') ?? '';
+      nameEl.textContent = dirty ? `● ${base}` : base;
+      nameEl.classList.toggle('dirty', dirty);
+    }
+    this.$container?.querySelector('.save')?.classList.toggle('dirty', dirty);
+  }
+
+  setAutosave(on: boolean): void {
+    let el = this.$container?.querySelector('.nb-autosave');
+    if (!el) {
+      el = document.createElement('span');
+      el.className = 'nb-autosave';
+      this.$container?.querySelector('.nb-toolbar')?.appendChild(el);
+    }
+    el.textContent = on ? 'Auto-save on' : 'Auto-save off';
+    (el as HTMLElement).title = on ? 'Notebook saves automatically' : 'Automatic saving is off';
+  }
+
   private render(): void {
     const existing = document.querySelector('.jupyter-notebook-wrapper');
     existing?.remove();
@@ -139,6 +168,7 @@ export class NotebookUI {
 
     wrapper.innerHTML = `
       <div class="nb-toolbar" style="flex-shrink:0;height:${toolbarHeight}px;min-height:${toolbarHeight}px">
+        <span class="nb-filename" title="Current notebook">Untitled.ipynb</span>
         <button class="nb-btn new-nb">+ New</button>
         <button class="nb-btn add-code">+ Code</button>
         <button class="nb-btn add-md">+ Markdown</button>

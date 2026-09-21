@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased] - Edit Safety: Auto-save, Backups, Conflict Detection
+
+- Auto-save ON by default (2.5 s debounce, skips while kernel runs); toggle via `jupyter-toggle-autosave`, preference persisted.
+- Dirty indicator: `●` filename + highlighted Save button.
+- Conflict detection: mtime baseline at open/save; manual save offers Overwrite / Save As / Cancel, auto-save skips with a warning toast.
+- Crash-safe backups: debounced localStorage snapshots (outputs stripped on quota pressure), recovery prompt on open, emergency snapshot on unload.
+- Native-tab coexistence: warns when the file is also open in the text editor; external `save-file` reloads when clean or warns when dirty.
+- Silent picker cancellation (no more error alerts on cancel).
+- `createNewNotebook` round-trip covered by harness (`/tmp/opencode`).
+
 ## [2.0.1] - TypeScript Migration & VS Code Editor
 
 - Migrate from JavaScript to TypeScript (`src/main.js` → `src/main.ts`).

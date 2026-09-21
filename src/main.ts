@@ -17,6 +17,7 @@ const CMD = {
   save: 'jupyter-save',
   saveAs: 'jupyter-save-as',
   new: 'jupyter-new',
+  toggleAutosave: 'jupyter-toggle-autosave',
   runCell: 'jupyter-run-cell',
   runAll: 'jupyter-run-all',
   toggleType: 'jupyter-toggle-type',
@@ -27,6 +28,17 @@ const CMD = {
 
 const COMMAND_NAMES = Object.values(CMD);
 
+const AUTOSAVE_KEY = 'jupyter-acode:autosave';
+const BACKUP_PREFIX = 'jupyter-acode:backup:';
+const AUTOSAVE_DELAY_MS = 2500;
+const BACKUP_DELAY_MS = 3000;
+
+interface BackupPayload {
+  name: string;
+  savedAt: number;
+  data: NotebookData;
+}
+
 class JupyterPlugin {
   private session: PythonSession | null = null;
   private ui: NotebookUI | null = null;
@@ -34,7 +46,16 @@ class JupyterPlugin {
   private currentFile: string | null = null;
   private currentFileName: string | null = null;
   private isModified = false;
+  private knownMtime: number | null = null;
+  private autosaveEnabled = true;
+  private autosaveTimer: ReturnType<typeof setTimeout> | null = null;
+  private backupTimer: ReturnType<typeof setTimeout> | null = null;
+  private kernelRunning = 0;
+  private saveInProgress = false;
+  private lastSelfSaveAt = 0;
+  private warnedNativeTabs = new Set<string>();
   private switchFileHook: ((file: { uri: string }) => void) | null = null;
+  private externalSaveHook: ((file: { uri: string }) => void) | null = null;
 
   async init(): Promise<void> {
     const win = window as Window & { acode?: AcodeModule; editorManager?: EditorManager };
@@ -42,6 +63,7 @@ class JupyterPlugin {
     (globalThis as any).editorManager = win.editorManager;
 
     this.session = null; // lazy-started on first run via ensureSession()
+    this.autosaveEnabled = this.loadAutosavePref();
     this.fileHandler = new FileHandler(plugin.id, (info) => this.openFile(info.uri, info.name));
     this.registerAllCommands();
     this.setupEditorHooks();
@@ -58,23 +80,27 @@ class JupyterPlugin {
       { name: CMD.moveDown, description: 'Move Cell Down', exec: () => this.ui?.moveCell(1) },
       { name: CMD.save, description: 'Save Notebook', exec: () => this.save() },
       { name: CMD.saveAs, description: 'Save Notebook As...', exec: () => this.saveAs() },
+      { name: CMD.toggleAutosave, description: 'Toggle Auto-save', exec: () => this.toggleAutosave() },
       { name: CMD.runCell, description: 'Run Cell', exec: () => this.runCell() },
       { name: CMD.runAll, description: 'Run All Cells', exec: () => this.runAll() },
       { name: CMD.toggleType, description: 'Toggle Cell Type', exec: () => this.ui?.toggleType() },
       { name: CMD.restartKernel, description: 'Restart Kernel', exec: () => this.restartKernel() },
       { name: CMD.interruptKernel, description: 'Interrupt Kernel', exec: () => this.interruptKernel() },
-      { name: CMD.clearOutputs, description: 'Clear All Outputs', exec: () => this.ui?.clearOutputs() },
+      { name: CMD.clearOutputs, description: 'Clear All Outputs', exec: () => { this.ui?.clearOutputs(); this.markModified(); } },
     ]);
   }
 
   private async openPicker(): Promise<void> {
     try {
       const result = await acode.fileBrowser?.('file', 'Select notebook');
-      if (result?.url) await this.openFile(result.url, result.filename || 'notebook.ipynb');
-    } catch (e) { acode.alert?.('Error', String(e)); }
+      if (result?.url) await this.openFile(result.url, result.filename || result.name || 'notebook.ipynb');
+    } catch {
+      /* picker cancelled — stay silent */
+    }
   }
 
   private mountNotebook(data: NotebookData, uri: string | null, filename: string): void {
+    this.clearTimers();
     this.ui?.remove();
     this.currentFile = uri;
     this.currentFileName = filename;
@@ -86,10 +112,32 @@ class JupyterPlugin {
       onMoveCell: (d: number) => this.ui?.moveCell(d),
       onToggleType: () => this.ui?.toggleType(),
       onSave: () => this.save(),
-      onModified: () => { this.isModified = true; },
+      onModified: () => this.markModified(),
       onSelectCell: () => {},
     });
     this.ui.mount();
+    this.ui.setFilename(filename);
+    this.ui.setDirty(false);
+    this.ui.setAutosave(this.autosaveEnabled);
+    if (uri) void this.warnIfNativeTabOpen(uri);
+  }
+
+  private markModified(): void {
+    this.isModified = true;
+    this.ui?.setDirty(true);
+    this.scheduleAutosave();
+    this.scheduleBackup();
+  }
+
+  private setClean(): void {
+    this.isModified = false;
+    this.ui?.setDirty(false);
+    this.clearBackup();
+  }
+
+  private clearTimers(): void {
+    if (this.autosaveTimer) { clearTimeout(this.autosaveTimer); this.autosaveTimer = null; }
+    if (this.backupTimer) { clearTimeout(this.backupTimer); this.backupTimer = null; }
   }
 
   private async confirmDiscardUnsaved(): Promise<boolean> {
@@ -102,37 +150,22 @@ class JupyterPlugin {
     }
   }
 
-  private async newNotebook(): Promise<void> {
-    if (!(await this.confirmDiscardUnsaved())) return;
-    this.mountNotebook(createNewNotebook(), null, 'Untitled.ipynb');
-    acode.toast?.('New notebook — use Save to write it to a file');
+  private async statMtime(uri: string): Promise<number | null> {
+    try {
+      const st = await acode.fsOperation!(uri).stat?.();
+      return typeof st?.modifiedDate === 'number' ? st.modifiedDate : null;
+    } catch {
+      return null;
+    }
   }
 
-  private async saveAs(): Promise<void> {
-    if (!this.ui) return;
-    try {
-      const folder = await acode.fileBrowser?.('folder', 'Choose folder for the notebook');
-      if (!folder?.url) return;
-
-      const prompt = acode.require('prompt') as (msg: string, def?: string, type?: string) => Promise<string>;
-      let name = await prompt('Notebook file name', this.currentFileName ?? 'Untitled.ipynb', 'text');
-      if (!name) return;
-      name = name.trim();
-      if (!name.toLowerCase().endsWith('.ipynb')) name += '.ipynb';
-
-      const json = saveNotebook(this.ui.getNotebookData());
-      const dirFs = acode.fsOperation!(folder.url);
-      if (typeof dirFs.createFile !== 'function') {
-        throw new Error('File creation is not supported here');
-      }
-      const fileUrl = await dirFs.createFile(name, json);
-      this.currentFile = fileUrl || `${folder.url.replace(/\/$/, '')}/${name}`;
-      this.currentFileName = name;
-      this.isModified = false;
-      acode.toast?.(`Saved ${name}`, 2000);
-    } catch (e) {
-      if (e) acode.alert?.('Error', `Failed to save: ${String(e)}`);
-    }
+  private async newNotebook(): Promise<void> {
+    if (!(await this.confirmDiscardUnsaved())) return;
+    this.snapshotBackup(); // keep emergency copy of what we are leaving
+    this.mountNotebook(createNewNotebook(), null, 'Untitled.ipynb');
+    this.knownMtime = null;
+    await this.maybeRecover(null, 'Untitled.ipynb');
+    if (!this.isModified) acode.toast?.('New notebook — use Save to write it to a file');
   }
 
   private async openFile(uri: string, filename: string): Promise<void> {
@@ -141,8 +174,77 @@ class JupyterPlugin {
       const fs = acode.fsOperation!(uri);
       const content = await fs.readFile('utf-8');
       this.mountNotebook(loadNotebook(content), uri, filename || 'notebook.ipynb');
+      this.knownMtime = await this.statMtime(uri);
+      await this.maybeRecover(uri, filename);
     } catch (e) {
       acode.alert?.('Error', `Failed to open: ${String(e)}`);
+    }
+  }
+
+  private async writeCurrentToFile(uri: string): Promise<void> {
+    if (!this.ui) return;
+    const json = saveNotebook(this.ui.getNotebookData());
+    await acode.fsOperation!(uri).writeFile(json);
+    this.lastSelfSaveAt = Date.now();
+    this.knownMtime = await this.statMtime(uri);
+    this.setClean();
+  }
+
+  private async hasExternalChange(): Promise<boolean> {
+    if (!this.currentFile) return false;
+    const mtime = await this.statMtime(this.currentFile);
+    return this.knownMtime !== null && mtime !== null && mtime !== this.knownMtime;
+  }
+
+  private async resolveConflict(): Promise<'overwrite' | 'saveas' | 'cancel'> {
+    try {
+      const select = acode.require('select') as (title: string, items: string[]) => Promise<string>;
+      const choice = await select('File changed on disk — how to proceed?', [
+        'Overwrite with notebook',
+        'Save As... (keep both)',
+        'Cancel',
+      ]);
+      if (choice.startsWith('Overwrite')) return 'overwrite';
+      if (choice.startsWith('Save As')) return 'saveas';
+      return 'cancel';
+    } catch {
+      return 'cancel';
+    }
+  }
+
+  private async saveAs(): Promise<void> {
+    if (!this.ui) return;
+    let folderUrl: string;
+    let name: string;
+    try {
+      const folder = await acode.fileBrowser?.('folder', 'Choose folder for the notebook');
+      if (!folder?.url) return; // cancelled
+      folderUrl = folder.url;
+
+      const prompt = acode.require('prompt') as (msg: string, def?: string, type?: string) => Promise<string>;
+      const raw = await prompt('Notebook file name', this.currentFileName ?? 'Untitled.ipynb', 'text');
+      if (!raw) return; // cancelled
+      name = raw.trim();
+      if (!name.toLowerCase().endsWith('.ipynb')) name += '.ipynb';
+    } catch {
+      return; // picker/prompt cancelled or unavailable — stay silent
+    }
+    try {
+      const json = saveNotebook(this.ui.getNotebookData());
+      const dirFs = acode.fsOperation!(folderUrl);
+      if (typeof dirFs.createFile !== 'function') {
+        throw new Error('File creation is not supported here');
+      }
+      const fileUrl = await dirFs.createFile(name, json);
+      this.currentFile = fileUrl || `${folderUrl.replace(/\/$/, '')}/${name}`;
+      this.currentFileName = name;
+      this.ui.setFilename(name);
+      this.lastSelfSaveAt = Date.now();
+      this.knownMtime = await this.statMtime(this.currentFile);
+      this.setClean();
+      acode.toast?.(`Saved ${name}`, 2000);
+    } catch (e) {
+      acode.alert?.('Error', `Failed to save: ${String(e)}`);
     }
   }
 
@@ -154,15 +256,18 @@ class JupyterPlugin {
     if (!code.trim()) return;
 
     this.ui.setRunning(index);
+    this.kernelRunning++;
     try {
       await this.ensureSession();
       const result = await this.session!.run(code);
       this.ui.setOutputs(index, result.outputs, result.execution_count);
       this.ui.setPrompt(index, result.execution_count);
-      this.isModified = true;
+      this.markModified();
     } catch (e) {
       this.ui.setOutputs(index, [{ output_type: 'error', evalue: String(e), traceback: [String(e)] }], null);
       this.ui.setPrompt(index, null);
+    } finally {
+      this.kernelRunning = Math.max(0, this.kernelRunning - 1);
     }
   }
 
@@ -178,19 +283,182 @@ class JupyterPlugin {
   }
 
   private async save(): Promise<void> {
-    if (!this.ui) return;
+    if (!this.ui || this.saveInProgress) return;
     if (!this.currentFile) {
       await this.saveAs();
       return;
     }
+    if (await this.hasExternalChange()) {
+      const action = await this.resolveConflict();
+      if (action === 'cancel') return;
+      if (action === 'saveas') { await this.saveAs(); return; }
+    }
+    this.saveInProgress = true;
     try {
-      const data = this.ui.getNotebookData();
-      const json = saveNotebook(data);
-      const fs = acode.fsOperation!(this.currentFile);
-      await fs.writeFile(json);
-      this.isModified = false;
+      await this.writeCurrentToFile(this.currentFile);
       acode.toast?.('Saved!', 2000);
-    } catch (e) { acode.alert?.('Error', `Failed to save: ${String(e)}`); }
+    } catch (e) {
+      acode.alert?.('Error', `Failed to save: ${String(e)}`);
+    } finally {
+      this.saveInProgress = false;
+    }
+  }
+
+  private loadAutosavePref(): boolean {
+    try {
+      const v = localStorage.getItem(AUTOSAVE_KEY);
+      return v === null ? true : v === '1';
+    } catch {
+      return true;
+    }
+  }
+
+  private async toggleAutosave(): Promise<void> {
+    this.autosaveEnabled = !this.autosaveEnabled;
+    try { localStorage.setItem(AUTOSAVE_KEY, this.autosaveEnabled ? '1' : '0'); } catch { /* ignore */ }
+    this.ui?.setAutosave(this.autosaveEnabled);
+    if (!this.autosaveEnabled && this.autosaveTimer) {
+      clearTimeout(this.autosaveTimer);
+      this.autosaveTimer = null;
+    }
+    acode.toast?.(this.autosaveEnabled ? 'Auto-save on' : 'Auto-save off');
+  }
+
+  private scheduleAutosave(): void {
+    if (this.autosaveTimer) clearTimeout(this.autosaveTimer);
+    if (!this.autosaveEnabled) return;
+    this.autosaveTimer = setTimeout(() => {
+      this.autosaveTimer = null;
+      void this.doAutosave();
+    }, AUTOSAVE_DELAY_MS);
+  }
+
+  private async doAutosave(): Promise<void> {
+    if (!this.autosaveEnabled || !this.ui || !this.isModified) return;
+    if (!this.currentFile || this.kernelRunning > 0 || this.saveInProgress) return;
+    if (await this.hasExternalChange()) {
+      acode.toast?.('Auto-save skipped: file changed on disk — use Save to resolve');
+      return;
+    }
+    this.saveInProgress = true;
+    try {
+      await this.writeCurrentToFile(this.currentFile);
+    } catch (e) {
+      console.warn('Jupyter: auto-save failed', e);
+    } finally {
+      this.saveInProgress = false;
+    }
+  }
+
+  private backupKey(): string {
+    return BACKUP_PREFIX + (this.currentFile ?? 'untitled');
+  }
+
+  private scheduleBackup(): void {
+    if (this.backupTimer) clearTimeout(this.backupTimer);
+    this.backupTimer = setTimeout(() => {
+      this.backupTimer = null;
+      this.snapshotBackup();
+    }, BACKUP_DELAY_MS);
+  }
+
+  private snapshotBackup(): void {
+    if (!this.ui || !this.isModified) return;
+    const payload: BackupPayload = {
+      name: this.currentFileName ?? 'Untitled.ipynb',
+      savedAt: Date.now(),
+      data: this.ui.getNotebookData(),
+    };
+    try {
+      localStorage.setItem(this.backupKey(), JSON.stringify(payload));
+    } catch {
+      try {
+        const stripped: BackupPayload = {
+          ...payload,
+          data: {
+            ...payload.data,
+            cells: payload.data.cells.map(c => ({ ...c, outputs: [], execution_count: null })),
+          },
+        };
+        localStorage.setItem(this.backupKey(), JSON.stringify(stripped));
+      } catch { /* storage full — give up silently */ }
+    }
+  }
+
+  private readBackup(key: string): BackupPayload | null {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as BackupPayload;
+      if (!parsed || !Array.isArray(parsed.data?.cells)) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  private clearBackup(): void {
+    try { localStorage.removeItem(this.backupKey()); } catch { /* ignore */ }
+  }
+
+  private async maybeRecover(uri: string | null, filename: string): Promise<void> {
+    const backup = this.readBackup(BACKUP_PREFIX + (uri ?? 'untitled'));
+    if (!backup || !this.ui) return;
+    const current = saveNotebook(this.ui.getNotebookData());
+    if (saveNotebook(backup.data) === current) {
+      this.clearBackup();
+      return;
+    }
+    try {
+      const confirm = acode.require('confirm') as (title: string, msg: string) => Promise<boolean>;
+      const when = new Date(backup.savedAt).toLocaleString();
+      const ok = await confirm(
+        'Recover unsaved changes?',
+        `Found unsaved edits to ${backup.name} from ${when}. Restore them?`,
+      );
+      if (ok) {
+        this.mountNotebook(backup.data, uri, filename);
+        this.markModified();
+        acode.toast?.('Recovered unsaved changes');
+      } else {
+        this.clearBackup();
+      }
+    } catch {
+      /* no confirm UI — leave backup for next time */
+    }
+  }
+
+  private async warnIfNativeTabOpen(uri: string): Promise<void> {
+    if (this.warnedNativeTabs.has(uri)) return;
+    this.warnedNativeTabs.add(uri);
+    try {
+      const tab = editorManager.getFile?.(uri, 'uri');
+      if (tab) {
+        acode.toast?.('Note: this file is also open in the text editor — avoid editing it there to prevent conflicts', 4000);
+      }
+    } catch { /* getFile throws when absent — fine */ }
+  }
+
+  private onExternalSave(file: { uri: string }): void {
+    if (!file || file.uri !== this.currentFile || !this.ui) return;
+    if (Date.now() - this.lastSelfSaveAt < 3000) return; // our own save echo
+    if (!this.isModified) {
+      // No local edits to lose — adopt the external content.
+      void (async () => {
+        try {
+          const content = await acode.fsOperation!(this.currentFile as string).readFile('utf-8');
+          const name = this.currentFileName ?? 'notebook.ipynb';
+          this.mountNotebook(loadNotebook(content), this.currentFile, name);
+          this.knownMtime = await this.statMtime(this.currentFile as string);
+          acode.toast?.('Notebook reloaded with external changes');
+        } catch (e) {
+          console.warn('Jupyter: external reload failed', e);
+        }
+      })();
+    } else {
+      // Keep the stale baseline so the next save raises the conflict dialog.
+      acode.toast?.('File changed outside the notebook — review before saving', 4000);
+    }
   }
 
   private async ensureSession(): Promise<void> {
@@ -205,6 +473,7 @@ class JupyterPlugin {
     if (this.session) await this.session.stop();
     this.session = new PythonSession();
     this.ui?.clearOutputs();
+    this.markModified();
     acode.toast?.('Kernel restarted');
   }
 
@@ -224,13 +493,20 @@ class JupyterPlugin {
         else { this.ui?.hide(); }
       };
       editorManager.on('switch-file', this.switchFileHook);
-    } catch (e) { console.warn('Jupyter: switch-file hook failed', e); }
+      this.externalSaveHook = (file: { uri: string }) => this.onExternalSave(file);
+      editorManager.on('save-file', this.externalSaveHook);
+    } catch (e) { console.warn('Jupyter: editor hooks failed', e); }
   }
 
   async destroy(): Promise<void> {
+    this.snapshotBackup(); // emergency copy of unsaved edits for next open
+    this.clearTimers();
     try { this.fileHandler?.unregister(); } catch { /* ignore */ }
     if (this.switchFileHook) {
       try { editorManager.off('switch-file', this.switchFileHook); } catch { /* ignore */ }
+    }
+    if (this.externalSaveHook) {
+      try { editorManager.off('save-file', this.externalSaveHook); } catch { /* ignore */ }
     }
     removeCommands(COMMAND_NAMES);
     await this.session?.stop();

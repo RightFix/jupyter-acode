@@ -20,9 +20,17 @@ interface TerminalModule {
   write(id: string, content: string): Promise<void>;
 }
 
+interface EditorFile {
+  uri: string;
+  filename: string;
+  isUnsaved: boolean;
+}
+
 interface EditorManager {
   isCodeMirror: boolean;
   activeFile?: { path?: string; filename?: string } | null;
+  files?: EditorFile[];
+  getFile?(test: string, type: 'uri' | 'id' | 'name'): EditorFile;
   on(event: string, callback: (...args: any[]) => void): void;
   off(event: string, callback: (...args: any[]) => void): void;
   editor?: {
@@ -45,6 +53,7 @@ interface AcodeModule {
     writeFile(content: string): Promise<void>;
     createFile?(name: string, content?: string): Promise<string>;
     exists?(): Promise<boolean>;
+    stat?(): Promise<{ modifiedDate: number }>;
   };
   loader?: { create(msg: string, sub: string): { show(): void; hide(): void } };
   toast?: (msg: string, duration?: number) => void;
