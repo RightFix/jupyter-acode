@@ -96,11 +96,7 @@
   user-select: none;
 }
 
-.nb-tag-in {
-  color: var(--primary-color, light-dark(#0071c1, #4da3ff));
-  border-color: var(--primary-color, light-dark(#0071c1, #4da3ff));
-}
-
+.nb-tag-in,
 .nb-tag-out {
   color: light-dark(#2e7d32, #7bc47f);
   border-color: light-dark(#2e7d32, #7bc47f);
