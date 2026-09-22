@@ -23,7 +23,7 @@ export class NotebookTabs {
     this.onClose = onClose;
   }
 
-  open(uri: string, filename: string): HTMLElement {
+  open(uri: string, filename: string, tabIcon?: string): HTMLElement {
     const existing = this.tabs.get(uri);
     if (existing) {
       this.clearHost(existing.host);
@@ -53,6 +53,7 @@ export class NotebookTabs {
       type: 'custom',
       content: host,
       hideQuickTools: true,
+      ...(tabIcon ? { tabIcon } : {}),
     });
     try { editorManager.addFile?.(file); } catch { /* ignore */ }
     try { file.makeActive(); } catch { /* ignore */ }

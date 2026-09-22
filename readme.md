@@ -8,6 +8,7 @@ A lightweight extension that renders Jupyter notebooks (`.ipynb` files) directly
 - **Real Editor Tabs**: notebooks open as first-class tabs — visible in the file list, switchable, closable
 - **Cell Rendering**: code cells with execution counts, rendered markdown, saved outputs
 - **Output Display**: text streams, tracebacks, inline PNG/SVG images, HTML outputs
+- **Notebook Icons**: ipynb files show the Jupyter logo (select the Jupyter pack in Settings → Icon pack; requires a recent Acode build)
 - **Live Reload**: re-renders automatically when the file changes on disk
 - **Read-only**: never modifies your files (edit/run coming later)
 

@@ -23,6 +23,9 @@ class JupyterPlugin {
   private fileHandler: FileHandler | null = null;
   private tabs = new NotebookTabs((uri) => this.onTabClose(uri));
   private styleEl: HTMLStyleElement | null = null;
+  private fileIcons: FileIconsApi | null = null;
+  private iconPack: { dispose(): void } | null = null;
+  private baseUrl = '';
   private externalSaveHook: ((file: { uri: string }) => void) | null = null;
   private removeFileHook: ((file: { uri: string }) => void) | null = null;
 
@@ -32,9 +35,25 @@ class JupyterPlugin {
     (globalThis as any).editorManager = win.editorManager;
 
     this.injectStyles();
+    this.registerIconPack();
     this.fileHandler = new FileHandler(plugin.id, (info) => this.openFile(info.uri, info.name));
     this.registerAllCommands();
     this.setupEditorHooks();
+  }
+
+  setBaseUrl(baseUrl: string): void {
+    this.baseUrl = baseUrl ?? '';
+  }
+
+  setFileIcons(api: FileIconsApi | undefined): void {
+    if (api && typeof api.register === 'function') {
+      this.fileIcons = api;
+      return;
+    }
+    try {
+      const fallback = acode.require('fileIcons') as FileIconsApi | undefined;
+      if (fallback && typeof fallback.register === 'function') this.fileIcons = fallback;
+    } catch { /* unavailable on this build — pack stays unregistered */ }
   }
 
   private injectStyles(): void {
@@ -81,11 +100,42 @@ class JupyterPlugin {
 
   private mountNotebook(data: NotebookData, uri: string, filename: string): void {
     this.sessions.get(uri)?.ui.remove();
-    const host = this.tabs.open(uri, filename);
+    const host = this.tabs.open(uri, filename, this.iconClassFor(filename));
     const ui = new NotebookUI(data);
     ui.mount(host);
     ui.setFilename(filename);
     this.sessions.set(uri, { ui, filename });
+  }
+
+  private iconClassFor(filename: string): string | undefined {
+    try {
+      const cls = this.fileIcons?.icon?.(filename);
+      return cls || undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private registerIconPack(): void {
+    if (!this.fileIcons || !this.baseUrl) return; // older Acode — skip silently
+    try {
+      const base = this.baseUrl.endsWith('/') ? this.baseUrl : `${this.baseUrl}/`;
+      this.iconPack = this.fileIcons.register({
+        id: plugin.id,
+        name: 'Jupyter',
+        icons: { ipynb: { src: `${base}icons/ipynb.png` } },
+        fileExtensions: { ipynb: 'ipynb' },
+      });
+      try {
+        if (!localStorage.getItem('jupyter-acode:iconpack-hint')) {
+          localStorage.setItem('jupyter-acode:iconpack-hint', '1');
+          acode.toast?.('Tip: pick the Jupyter pack in Settings → Icon pack for notebook icons', 4000);
+        }
+      } catch { /* storage unavailable — skip hint bookkeeping */ }
+    } catch (e) {
+      console.warn('Jupyter: icon pack registration failed', e);
+      this.iconPack = null;
+    }
   }
 
   private onTabClose(uri: string): void {
@@ -116,6 +166,8 @@ class JupyterPlugin {
 
   async destroy(): Promise<void> {
     this.removeStyles();
+    try { this.iconPack?.dispose(); } catch { /* ignore */ }
+    this.iconPack = null;
     try { this.fileHandler?.unregister(); } catch { /* ignore */ }
     if (this.externalSaveHook) {
       try { editorManager.off('save-file', this.externalSaveHook); } catch { /* ignore */ }
@@ -135,7 +187,9 @@ class JupyterPlugin {
 const win = window as Window & { acode?: AcodeModule };
 if (win.acode) {
   const jupyterPlugin = new JupyterPlugin();
-  win.acode.setPluginInit(plugin.id, async (_baseUrl: string, _page: unknown, _ctx: unknown) => {
+  win.acode.setPluginInit(plugin.id, async (_baseUrl: string, _page: unknown, ctx: unknown) => {
+    jupyterPlugin.setBaseUrl(_baseUrl);
+    jupyterPlugin.setFileIcons((ctx as { fileIcons?: FileIconsApi } | undefined)?.fileIcons);
     await jupyterPlugin.init();
   });
   win.acode.setPluginUnmount(plugin.id, () => jupyterPlugin.destroy());

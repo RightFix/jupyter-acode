@@ -1,5 +1,5 @@
 import * as esbuild from 'esbuild';
-import { writeFileSync, existsSync, mkdirSync, readFileSync } from 'fs';
+import { writeFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import JSZip from 'jszip';
@@ -29,21 +29,29 @@ const buildOptions = {
 async function createZip() {
   const zip = new JSZip();
   
-  const files = [
+  const paths = [
     'plugin.json',
     'main.js',
     'readme.md',
     'changelog.md',
     'LICENSE',
     'icon.png',
+    'icons',
   ];
 
-  for (const file of files) {
-    const filePath = resolve(__dirname, file);
-    if (existsSync(filePath)) {
-      zip.file(file, readFileSync(filePath));
+  const addPath = (relPath) => {
+    const filePath = resolve(__dirname, relPath);
+    if (!existsSync(filePath)) return;
+    if (statSync(filePath).isDirectory()) {
+      for (const name of readdirSync(filePath)) {
+        addPath(`${relPath}/${name}`);
+      }
+      return;
     }
-  }
+    zip.file(relPath, readFileSync(filePath));
+  };
+
+  for (const p of paths) addPath(p);
 
   const content = await zip.generateAsync({ type: 'nodebuffer' });
   writeFileSync(resolve(__dirname, 'dist.zip'), content);

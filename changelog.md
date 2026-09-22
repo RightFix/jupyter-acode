@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0] - Notebook File Icons
+
+- Registers a `Jupyter` icon pack mapping `ipynb` → bundled `icons/ipynb.png` (File Icons API, feature-detected for older Acode builds).
+- Notebook tabs resolve the pack icon class at creation; registration disposed on unload.
+- First-run toast points at Settings → Icon pack (manual selection is required by Acode).
+- `dist.zip` now bundles the `icons/` directory.
+
 ## [2.1.0] - Styles Reach Tabs + Versioned Releases
 
 - Fix styles not applying: custom tab content is Shadow-DOM isolated, so the stylesheet is now injected inside each tab host (head injection kept as fallback).

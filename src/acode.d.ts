@@ -11,6 +11,17 @@ interface CommandsModule {
   removeCommand?: (name: string) => void;
 }
 
+interface FileIconsApi {
+  register(pack: {
+    id: string;
+    name: string;
+    icons: Record<string, { src: string }>;
+    fileExtensions: Record<string, string>;
+  }): { dispose(): void };
+  icon(resource: string): string;
+  onChange(listener: (e: { activeId: string; preferredId: string }) => void): () => void;
+}
+
 interface TerminalInstance {
   id: string;
 }
