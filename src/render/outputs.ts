@@ -39,3 +39,35 @@ export function renderOutputs(outputs: Output[]): string {
   if (!outputs || outputs.length === 0) return '';
   return outputs.map(o => `<div class="nb-output">${renderOutput(o)}</div>`).join('');
 }
+
+function asText(value: string | string[] | undefined): string {
+  if (value === undefined) return '';
+  return Array.isArray(value) ? value.join('') : value;
+}
+
+function stripHtml(html: string): string {
+  try {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent ?? '';
+  } catch {
+    return html.replace(/<[^>]*>/g, '');
+  }
+}
+
+/** Plain-text form of outputs for copy: streams, text/plain, tracebacks. Images have no text form. */
+export function outputsText(outputs: Output[]): string {
+  const parts: string[] = [];
+  for (const o of outputs ?? []) {
+    if (o.output_type === 'stream') {
+      parts.push(asText(o.text));
+    } else if (o.output_type === 'error') {
+      const tb = o.traceback ?? (o.evalue ? [o.evalue] : []);
+      parts.push(tb.join('\n'));
+    } else if (o.data) {
+      if (o.data['text/plain']) parts.push(asText(o.data['text/plain']));
+      else if (o.data['text/html']) parts.push(stripHtml(asText(o.data['text/html'])));
+    }
+  }
+  return parts.filter(p => p).join('\n');
+}

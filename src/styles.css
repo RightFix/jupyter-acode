@@ -138,7 +138,23 @@
   color: var(--primary-color, light-dark(#0071c1, #4da3ff));
 }
 
+.nb-copy {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-left: auto;
+}
+
 .nb-foldable.collapsed { display: none; }
+
+/* ---- selectable text ---- */
+.nb-code,
+.nb-markdown-preview,
+.nb-output pre {
+  user-select: text;
+  -webkit-user-select: text;
+}
 
 /* ---- visible scrollbars (scoped: never touch Acode's own UI) ---- */
 .nb-code::-webkit-scrollbar,

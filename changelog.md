@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased] - Copyable Blocks & Fixed Toast Path
+
+- Copy button on every IN / OUT / MARKDOWN block: raw source for code and markdown; streams + plain text + tracebacks for outputs (images skipped).
+- Clipboard via `navigator.clipboard` with hidden-textarea fallback; success/failure toast.
+- Toasts fixed on the documented API: shared `showToast` (`acode.require('toast')` → `window.toast`); main consolidated onto it.
+- Explicit `user-select: text` on code, markdown, and output text.
+- Harness at 50 assertions (exact copied text per block type).
+
 ## [Unreleased] - Independent Cell Folding
 
 - Every input, output, and markdown block gets its own fold button (▾/▸) beside its type tag.

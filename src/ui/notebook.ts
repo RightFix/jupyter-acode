@@ -1,6 +1,7 @@
 import { Cell, NotebookData } from '../types';
 import { renderMarkdown } from '../render/markdown';
-import { renderOutputs } from '../render/outputs';
+import { outputsText, renderOutputs } from '../render/outputs';
+import { copyText, showToast } from './toast';
 
 export class NotebookUI {
   private $container: HTMLElement | null = null;
@@ -92,7 +93,7 @@ export class NotebookUI {
     content.className = 'nb-cell-content';
 
     if (type === 'markdown') {
-      content.appendChild(this.foldHead(index, 'md', 'nb-tag-md', 'MARKDOWN'));
+      content.appendChild(this.foldHead(index, 'md', 'nb-tag-md', 'MARKDOWN', this.sourceText(cell)));
       const body = document.createElement('div');
       body.className = 'nb-foldable';
       const preview = document.createElement('div');
@@ -102,12 +103,12 @@ export class NotebookUI {
       content.appendChild(body);
       this.applyFoldState(index, 'md', body);
     } else {
-      content.appendChild(this.foldHead(index, 'in', type === 'code' ? 'nb-tag-in' : 'nb-tag-raw', type === 'code' ? 'IN' : 'RAW'));
+      content.appendChild(this.foldHead(index, 'in', type === 'code' ? 'nb-tag-in' : 'nb-tag-raw', type === 'code' ? 'IN' : 'RAW', this.sourceText(cell)));
       const body = document.createElement('div');
       body.className = 'nb-foldable';
       const pre = document.createElement('pre');
       pre.className = 'nb-code';
-      pre.textContent = Array.isArray(cell.source) ? cell.source.join('') : String(cell.source ?? '');
+      pre.textContent = this.sourceText(cell);
       body.appendChild(pre);
       content.appendChild(body);
       this.applyFoldState(index, 'in', body);
@@ -116,7 +117,7 @@ export class NotebookUI {
     el.appendChild(content);
 
     if (type === 'code' && cell.outputs?.length) {
-      el.appendChild(this.foldHead(index, 'out', 'nb-tag-out', 'OUT'));
+      el.appendChild(this.foldHead(index, 'out', 'nb-tag-out', 'OUT', outputsText(cell.outputs)));
       const outEl = document.createElement('div');
       outEl.className = 'nb-outputs nb-foldable';
       outEl.innerHTML = renderOutputs(cell.outputs);
@@ -126,11 +127,20 @@ export class NotebookUI {
     return el;
   }
 
+  private sourceText(cell: Cell): string {
+    return Array.isArray(cell.source) ? cell.source.join('') : String(cell.source ?? '');
+  }
+
+  private async copyBlock(text: string, what: string): Promise<void> {
+    const ok = await copyText(text);
+    showToast(ok ? `Copied ${what}` : 'Copy failed');
+  }
+
   private foldKey(index: number, part: string): string {
     return `${index}:${part}`;
   }
 
-  private foldHead(index: number, part: string, tagClass: string, label: string): HTMLElement {
+  private foldHead(index: number, part: string, tagClass: string, label: string, copyText: string | null): HTMLElement {
     const head = document.createElement('div');
     head.className = 'nb-foldhead';
     const btn = document.createElement('button');
@@ -143,6 +153,15 @@ export class NotebookUI {
     tag.textContent = label;
     head.appendChild(btn);
     head.appendChild(tag);
+    if (copyText !== null) {
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'nb-fold nb-copy';
+      copyBtn.textContent = 'Copy';
+      copyBtn.title = `Copy ${label.toLowerCase()}`;
+      copyBtn.setAttribute('aria-label', `Copy ${label.toLowerCase()}`);
+      copyBtn.onclick = () => void this.copyBlock(copyText, label.toLowerCase());
+      head.appendChild(copyBtn);
+    }
     btn.onclick = () => {
       const body = this.foldBody(index, part);
       if (body) this.toggleFold(index, part, body, btn as HTMLButtonElement);

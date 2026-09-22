@@ -5,6 +5,7 @@ import { loadNotebook } from './nbformat';
 import { NotebookUI } from './ui/notebook';
 import { NotebookTabs } from './ui/tabs';
 import { FileHandler, baseName } from './ui/filehandler';
+import { showToast } from './ui/toast';
 import { registerCommands, removeCommands } from './ui/toolbar';
 
 const CMD = {
@@ -12,22 +13,6 @@ const CMD = {
 } as const;
 
 const COMMAND_NAMES = Object.values(CMD);
-
-type ToastFn = (message: string, duration?: number) => void;
-
-export function showToast(message: string, duration = 2000): void {
-  try {
-    const viaRequire = acode.require('toast') as ToastFn | undefined;
-    if (typeof viaRequire === 'function') {
-      viaRequire(message, duration);
-      return;
-    }
-  } catch { /* fall through to window.toast */ }
-  try {
-    const w = window as Window & { toast?: ToastFn };
-    if (typeof w.toast === 'function') w.toast(message, duration);
-  } catch { /* toast unavailable — stay silent */ }
-}
 
 interface OpenSession {
   ui: NotebookUI;
