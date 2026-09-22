@@ -2,20 +2,14 @@ import { Cell, NotebookData } from '../types';
 import { renderMarkdown } from '../render/markdown';
 import { renderOutputs } from '../render/outputs';
 
-export interface NotebookCallbacks {
-  onOpen: () => void;
-}
-
 export class NotebookUI {
   private $container: HTMLElement | null = null;
   private $cells: HTMLElement | null = null;
   private overlay = false;
   private data: NotebookData;
-  private cbs: NotebookCallbacks;
 
-  constructor(data: NotebookData, cbs: NotebookCallbacks) {
+  constructor(data: NotebookData) {
     this.data = data;
-    this.cbs = cbs;
   }
 
   mount(host?: HTMLElement | null): void { this.render(host ?? null); }
@@ -55,12 +49,9 @@ export class NotebookUI {
     wrapper.innerHTML = `
       <div class="nb-toolbar" style="flex-shrink:0;height:${toolbarHeight}px;min-height:${toolbarHeight}px">
         <span class="nb-filename" title="Current notebook">Untitled.ipynb</span>
-        <button class="nb-btn open-nb">Open</button>
       </div>
       <div class="nb-cells" style="flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:8px;box-sizing:border-box"></div>
     `;
-
-    (wrapper.querySelector('.open-nb') as HTMLElement).onclick = () => this.cbs.onOpen();
 
     this.$container = wrapper;
     this.$cells = wrapper.querySelector('.nb-cells');

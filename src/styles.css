@@ -27,25 +27,6 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.nb-btn {
-  padding: 6px 12px;
-  background: var(--theme-surface, #fff);
-  border: 1px solid var(--theme-border, #ccc);
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  color: var(--theme-color, #333);
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.nb-btn:hover {
-  background: var(--theme-surface-variant, #e8e8e8);
-  border-color: #0071c1;
-}
-
 .nb-filename {
   align-self: center;
   font-size: 13px;
