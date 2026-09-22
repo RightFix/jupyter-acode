@@ -13,6 +13,22 @@ const CMD = {
 
 const COMMAND_NAMES = Object.values(CMD);
 
+type ToastFn = (message: string, duration?: number) => void;
+
+export function showToast(message: string, duration = 2000): void {
+  try {
+    const viaRequire = acode.require('toast') as ToastFn | undefined;
+    if (typeof viaRequire === 'function') {
+      viaRequire(message, duration);
+      return;
+    }
+  } catch { /* fall through to window.toast */ }
+  try {
+    const w = window as Window & { toast?: ToastFn };
+    if (typeof w.toast === 'function') w.toast(message, duration);
+  } catch { /* toast unavailable — stay silent */ }
+}
+
 interface OpenSession {
   ui: NotebookUI;
   filename: string;
@@ -35,7 +51,6 @@ class JupyterPlugin {
     (globalThis as any).editorManager = win.editorManager;
 
     this.injectStyles();
-    acode.toast?.('Jupyter viewer v2.2.3 loaded'); // CANARY: proves fresh JS executes; remove after diagnosis
     this.registerIconPack();
     this.fileHandler = new FileHandler(plugin.id, (info) => this.openFile(info.uri, info.name));
     this.registerAllCommands();
@@ -130,7 +145,7 @@ class JupyterPlugin {
       try {
         if (!localStorage.getItem('jupyter-acode:iconpack-hint')) {
           localStorage.setItem('jupyter-acode:iconpack-hint', '1');
-          acode.toast?.('Tip: pick the Jupyter pack in Settings → Icon pack for notebook icons', 4000);
+          showToast('Tip: pick the Jupyter pack in Settings → Icon pack for notebook icons', 4000);
         }
       } catch { /* storage unavailable — skip hint bookkeeping */ }
     } catch (e) {

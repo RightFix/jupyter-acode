@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased] - Toast Fix, Natural Cell Heights
+
+- Fix toasts never firing: `acode.toast` does not exist per official types; new `showToast` uses `acode.require('toast')` with `window.toast` fallback. Removed both diagnostic canaries.
+- Removed the nested viewport scroll pane: cells flow naturally and size by content, whole tab scrolls.
+- Stripped leftover inline white backgrounds so the adaptive palette owns all color.
+- No version bump (test phase).
+
 ## [2.2.0] - Notebook File Icons
 
 - Registers a `Jupyter` icon pack mapping `ipynb` → bundled `icons/ipynb.png` (File Icons API, feature-detected for older Acode builds).

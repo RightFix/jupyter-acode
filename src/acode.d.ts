@@ -64,7 +64,6 @@ interface AcodeModule {
     readFile(encoding: string): Promise<string>;
   };
   loader?: { create(msg: string, sub: string): { show(): void; hide(): void } };
-  toast?: (msg: string, duration?: number) => void;
   alert?: (title: string, msg: string) => void;
   setPluginInit(id: string, fn: (baseUrl: string, $page: any, ctx: any) => Promise<void>): void;
   setPluginUnmount(id: string, fn: () => void): void;

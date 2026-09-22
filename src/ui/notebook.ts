@@ -38,19 +38,19 @@ export class NotebookUI {
     wrapper.className = 'jupyter-notebook-wrapper';
     if (host) {
       this.overlay = false;
-      wrapper.style.cssText = 'display:flex;flex-direction:column;height:100%;background:var(--theme-surface,#fff);box-sizing:border-box;';
+      wrapper.style.cssText = 'display:flex;flex-direction:column;min-height:100%;box-sizing:border-box;';
     } else {
       this.overlay = true;
       const header = document.querySelector('header') || document.querySelector('.header') || document.querySelector('#header');
       const headerHeight = header ? (header as HTMLElement).offsetHeight : 44;
-      wrapper.style.cssText = `position:absolute;top:${headerHeight}px;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:var(--theme-surface,#fff);z-index:1;`;
+      wrapper.style.cssText = `position:absolute;top:${headerHeight}px;left:0;right:0;bottom:0;display:flex;flex-direction:column;box-sizing:border-box;overflow-y:auto;`;
     }
 
     wrapper.innerHTML = `
       <div class="nb-toolbar" style="flex-shrink:0;height:${toolbarHeight}px;min-height:${toolbarHeight}px">
         <span class="nb-filename" title="Current notebook">Untitled.ipynb</span>
       </div>
-      <div class="nb-cells" style="flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:8px;box-sizing:border-box"></div>
+      <div class="nb-cells"></div>
     `;
 
     this.$container = wrapper;
