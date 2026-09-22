@@ -9,82 +9,58 @@ interface EditorFileCtor {
 }
 
 /**
- * Hosts the notebook UI inside a single real Acode editor tab
- * (custom EditorFile), so open notebooks appear in the file list,
- * participate in tab switching, and can be closed like any file.
- *
- * Single-tab policy: one notebook tab follows the current file.
- * This matches the single active-notebook model (one kernel session,
- * one dirty state) and avoids orphaned UIs across tabs.
+ * One real Acode editor tab (custom EditorFile) per open notebook,
+ * so multiple .ipynb files stay open side by side without
+ * overwriting each other. Each tab hosts its own notebook UI.
  */
 export class NotebookTabs {
-  private file: KernelTab | null = null;
-  private host: HTMLElement | null = null;
-  private uri: string | null = null;
-  private onClose: (uri: string | null) => void;
+  private tabs = new Map<string, { file: KernelTab; host: HTMLElement }>();
+  private onClose: (uri: string) => void;
 
-  constructor(onClose: (uri: string | null) => void) {
+  constructor(onClose: (uri: string) => void) {
     this.onClose = onClose;
   }
 
-  has(): boolean {
-    return this.file !== null;
-  }
-
-  open(uri: string | null, filename: string): HTMLElement {
-    if (this.file && this.host) {
-      try { this.file.filename = filename; } catch { /* ignore */ }
-      this.uri = uri;
-      if (uri) {
-        try { this.file.uri = uri; } catch { /* ignore */ }
-      }
-      this.clearHost(this.host);
-      try { this.file.makeActive(); } catch { /* ignore */ }
-      return this.host;
+  open(uri: string, filename: string): HTMLElement {
+    const existing = this.tabs.get(uri);
+    if (existing) {
+      this.clearHost(existing.host);
+      try { existing.file.makeActive(); } catch { /* ignore */ }
+      return existing.host;
     }
     // Adopt a tab Acode already has open (e.g. restored session).
-    if (uri) {
-      try {
-        const adopted = editorManager.getFile?.(uri, 'uri') as KernelTab | undefined;
-        const content = (adopted as { content?: HTMLElement } | undefined)?.content;
-        if (adopted && content) {
-          this.file = adopted;
-          this.host = content;
-          this.uri = uri;
-          this.clearHost(content);
-          this.watchClose(adopted);
-          try { adopted.makeActive(); } catch { /* ignore */ }
-          return content;
-        }
-      } catch { /* not open — create below */ }
-    }
+    try {
+      const adopted = editorManager.getFile?.(uri, 'uri') as KernelTab | undefined;
+      const content = (adopted as { content?: HTMLElement } | undefined)?.content;
+      if (adopted && content) {
+        this.clearHost(content);
+        this.track(uri, adopted, content);
+        try { adopted.makeActive(); } catch { /* ignore */ }
+        return content;
+      }
+    } catch { /* not open — create below */ }
     const host = document.createElement('div');
     host.className = 'jupyter-tab-host';
     host.style.cssText = 'height:100%;display:flex;flex-direction:column;';
     const Ctor = acode.require('editorFile') as EditorFileCtor;
     const file = new Ctor(filename, {
-      ...(uri ? { uri } : {}),
+      uri,
       type: 'custom',
       content: host,
       hideQuickTools: true,
     });
     try { editorManager.addFile?.(file); } catch { /* ignore */ }
     try { file.makeActive(); } catch { /* ignore */ }
-    this.file = file;
-    this.host = host;
-    this.uri = uri;
-    this.watchClose(file);
+    this.track(uri, file, host);
     return host;
   }
 
-  private watchClose(file: KernelTab): void {
+  private track(uri: string, file: KernelTab, host: HTMLElement): void {
+    this.tabs.set(uri, { file, host });
     try {
       file.on('close', () => {
-        if (this.file === file) {
-          const uri = this.uri;
-          this.file = null;
-          this.host = null;
-          this.uri = null;
+        if (this.tabs.get(uri)?.file === file) {
+          this.tabs.delete(uri);
           this.onClose(uri);
         }
       });

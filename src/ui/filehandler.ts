@@ -3,6 +3,12 @@ interface FileInfo {
   name: string;
 }
 
+export function baseName(uri: string): string {
+  const part = uri.split('/').pop() ?? '';
+  const clean = part.split('?')[0];
+  return clean || 'notebook.ipynb';
+}
+
 export class FileHandler {
   private id: string;
 
@@ -12,7 +18,9 @@ export class FileHandler {
       acode.registerFileHandler?.(id, {
         extensions: ['ipynb'],
         handleFile: async (fileInfo: Record<string, string>) => {
-          await onOpen({ uri: fileInfo.url ?? fileInfo.uri, name: fileInfo.filename ?? 'notebook.ipynb' });
+          const uri = fileInfo.url ?? fileInfo.uri;
+          const name = fileInfo.filename ?? fileInfo.name ?? baseName(uri);
+          await onOpen({ uri, name });
         },
       });
     } catch (e) {

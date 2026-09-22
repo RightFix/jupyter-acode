@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] - Real Filenames & Multi-Tab
+
+- Fix opened files showing `notebook.ipynb`: handler now prefers `fileInfo.name` (what Acode actually sends) with basename fallback.
+- Multiple notebooks open side by side: one tab + independent view per file URI, no more overwriting.
+- Per-tab reload on external change, per-tab close cleanup; reopening reuses the existing tab.
+
 ## [Unreleased] - Remove Header Button
 
 - Removed the header `+` button; notebooks open via file browser, file handler, or `jupyter-open` command.
