@@ -30,10 +30,9 @@ The following command is available via command palette:
 
 ## Installation
 
-1. Download the plugin
-2. In Acode, go to Settings > Plugins
-3. Click the `+` button
-4. Select "Local" and choose the downloaded zip file
+1. In Acode, open the plugin search
+2. Search for **Jupyter Notebook**
+3. Tap install
 
 ## License
 
