@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased] - Independent Cell Folding
+
+- Every input, output, and markdown block gets its own fold button (▾/▸) beside its type tag.
+- Code input and outputs fold independently of each other.
+- Fold state persists across re-renders within the session.
+- Harness at 45 assertions.
+
 ## [Unreleased] - Cell Type Tags & Visible Scrollbars
 
 - `IN` tag above code inputs, `OUT` above outputs, `MARKDOWN` above markdown (`RAW` fallback), color-coded to match prompts/accents.

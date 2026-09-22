@@ -115,6 +115,35 @@
   color: var(--text-color, light-dark(#5f6368, #9aa0a6));
 }
 
+/* ---- fold headers ---- */
+.nb-foldhead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.nb-foldhead .nb-tag { margin-bottom: 0; }
+
+.nb-fold {
+  background: transparent;
+  border: 1px solid var(--border-color, light-dark(#d0d0d0, #3a3f45));
+  border-radius: 4px;
+  color: var(--text-color, light-dark(#5f6368, #9aa0a6));
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 7px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.nb-fold:hover {
+  border-color: var(--primary-color, light-dark(#0071c1, #4da3ff));
+  color: var(--primary-color, light-dark(#0071c1, #4da3ff));
+}
+
+.nb-foldable.collapsed { display: none; }
+
 /* ---- visible scrollbars (scoped: never touch Acode's own UI) ---- */
 .nb-code::-webkit-scrollbar,
 .nb-output pre::-webkit-scrollbar,

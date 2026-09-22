@@ -7,6 +7,7 @@ export class NotebookUI {
   private $cells: HTMLElement | null = null;
   private overlay = false;
   private data: NotebookData;
+  private collapsed = new Set<string>();
 
   constructor(data: NotebookData) {
     this.data = data;
@@ -91,34 +92,87 @@ export class NotebookUI {
     content.className = 'nb-cell-content';
 
     if (type === 'markdown') {
-      const tag = document.createElement('div');
-      tag.className = 'nb-tag nb-tag-md';
-      tag.textContent = 'MARKDOWN';
-      content.appendChild(tag);
+      content.appendChild(this.foldHead(index, 'md', 'nb-tag-md', 'MARKDOWN'));
+      const body = document.createElement('div');
+      body.className = 'nb-foldable';
       const preview = document.createElement('div');
       preview.className = 'nb-markdown-preview';
       preview.innerHTML = renderMarkdown(cell.source);
-      content.appendChild(preview);
+      body.appendChild(preview);
+      content.appendChild(body);
+      this.applyFoldState(index, 'md', body);
     } else {
-      const tag = document.createElement('div');
-      tag.className = type === 'code' ? 'nb-tag nb-tag-in' : 'nb-tag nb-tag-raw';
-      tag.textContent = type === 'code' ? 'IN' : 'RAW';
-      content.appendChild(tag);
+      content.appendChild(this.foldHead(index, 'in', type === 'code' ? 'nb-tag-in' : 'nb-tag-raw', type === 'code' ? 'IN' : 'RAW'));
+      const body = document.createElement('div');
+      body.className = 'nb-foldable';
       const pre = document.createElement('pre');
       pre.className = 'nb-code';
       pre.textContent = Array.isArray(cell.source) ? cell.source.join('') : String(cell.source ?? '');
-      content.appendChild(pre);
+      body.appendChild(pre);
+      content.appendChild(body);
+      this.applyFoldState(index, 'in', body);
     }
 
     el.appendChild(content);
 
     if (type === 'code' && cell.outputs?.length) {
+      el.appendChild(this.foldHead(index, 'out', 'nb-tag-out', 'OUT'));
       const outEl = document.createElement('div');
-      outEl.className = 'nb-outputs';
-      outEl.innerHTML = `<div class="nb-tag nb-tag-out">OUT</div>${renderOutputs(cell.outputs)}`;
+      outEl.className = 'nb-outputs nb-foldable';
+      outEl.innerHTML = renderOutputs(cell.outputs);
       el.appendChild(outEl);
+      this.applyFoldState(index, 'out', outEl);
     }
     return el;
+  }
+
+  private foldKey(index: number, part: string): string {
+    return `${index}:${part}`;
+  }
+
+  private foldHead(index: number, part: string, tagClass: string, label: string): HTMLElement {
+    const head = document.createElement('div');
+    head.className = 'nb-foldhead';
+    const btn = document.createElement('button');
+    btn.className = 'nb-fold';
+    btn.textContent = '▾';
+    btn.title = `Fold ${label.toLowerCase()}`;
+    btn.setAttribute('aria-label', `Fold ${label.toLowerCase()}`);
+    const tag = document.createElement('div');
+    tag.className = `nb-tag ${tagClass}`;
+    tag.textContent = label;
+    head.appendChild(btn);
+    head.appendChild(tag);
+    btn.onclick = () => {
+      const body = this.foldBody(index, part);
+      if (body) this.toggleFold(index, part, body, btn as HTMLButtonElement);
+    };
+    if (this.collapsed.has(this.foldKey(index, part))) {
+      btn.textContent = '▸';
+      btn.setAttribute('aria-label', `Unfold ${label.toLowerCase()}`);
+    }
+    return head;
+  }
+
+  private foldBody(index: number, part: string): HTMLElement | null {
+    const cellEl = this.$cells?.querySelector(`[data-index="${index}"]`);
+    if (!cellEl) return null;
+    const bodies = cellEl.querySelectorAll('.nb-foldable');
+    const order = part === 'out' ? 1 : 0;
+    return (bodies[order] as HTMLElement | undefined) ?? null;
+  }
+
+  private applyFoldState(index: number, part: string, body: HTMLElement): void {
+    if (this.collapsed.has(this.foldKey(index, part))) body.classList.add('collapsed');
+  }
+
+  private toggleFold(index: number, part: string, body: HTMLElement, btn: HTMLButtonElement): void {
+    const key = this.foldKey(index, part);
+    const collapsed = !this.collapsed.has(key);
+    if (collapsed) this.collapsed.add(key);
+    else this.collapsed.delete(key);
+    body.classList.toggle('collapsed', collapsed);
+    btn.textContent = collapsed ? '▸' : '▾';
   }
 
   private hideNativeEditor(): void {
