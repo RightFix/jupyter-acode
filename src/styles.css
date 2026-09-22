@@ -6,9 +6,7 @@
   color: var(--text-color, light-dark(#24292e, #e8eaed));
   background: var(--background-color, light-dark(#ffffff, #1a1d21));
   color-scheme: light dark;
-  padding: 12px;
-  box-sizing: border-box;
-  outline: 4px solid #ff0000; /* CANARY 2.2.2: proves fresh CSS is live; remove after diagnosis */
+  padding: 0px;
 }
 
 /* ---- toolbar ---- */
@@ -21,7 +19,7 @@
   margin-bottom: 12px;
   background: var(--background-color, light-dark(#f2f3f5, #22262b));
   border: 1px solid var(--border-color, light-dark(#e0e0e0, #3a3f45));
-  border-radius: 8px;
+  border-radius: 0px 8px;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -42,11 +40,11 @@
 
 /* ---- cells ---- */
 .nb-cells {
-  padding: 0 2px 8px;
+  padding: 0px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 5px;
 }
 
 .nb-empty {
