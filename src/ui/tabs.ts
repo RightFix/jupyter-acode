@@ -23,7 +23,7 @@ export class NotebookTabs {
     this.onClose = onClose;
   }
 
-  open(uri: string, filename: string, tabIcon?: string): HTMLElement {
+  open(uri: string, filename: string): HTMLElement {
     const existing = this.tabs.get(uri);
     if (existing) {
       this.clearHost(existing.host);
@@ -53,7 +53,10 @@ export class NotebookTabs {
       type: 'custom',
       content: host,
       hideQuickTools: true,
-      ...(tabIcon ? { tabIcon } : {}),
+      // Custom tabs render options.tabIcon verbatim (Acode never consults
+      // helpers.getIconForFile for them), so pin the ipynb class directly.
+      // Our head-injected legacy CSS paints it; no API gating involved.
+      tabIcon: 'file file_type_default file_type_ipynb',
     });
     try { editorManager.addFile?.(file); } catch { /* ignore */ }
     try { file.makeActive(); } catch { /* ignore */ }

@@ -106,20 +106,11 @@ class JupyterPlugin {
 
   private mountNotebook(data: NotebookData, uri: string, filename: string): void {
     this.sessions.get(uri)?.ui.remove();
-    const host = this.tabs.open(uri, filename, this.iconClassFor(filename));
+    const host = this.tabs.open(uri, filename);
     const ui = new NotebookUI(data);
     ui.mount(host);
     ui.setFilename(filename);
     this.sessions.set(uri, { ui, filename });
-  }
-
-  private iconClassFor(filename: string): string | undefined {
-    try {
-      const cls = this.fileIcons?.icon?.(filename);
-      return cls || undefined;
-    } catch {
-      return undefined;
-    }
   }
 
   private registerIconPack(): void {

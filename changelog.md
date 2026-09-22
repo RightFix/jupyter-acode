@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] - Tab Icons via tabIcon Option
+
+- Acode renders custom-tab icons verbatim from the `tabIcon` option (never via `helpers.getIconForFile`): tabs now pin `file file_type_default file_type_ipynb` directly, painted by our head-injected CSS on all builds.
+- Removed the `fileIcons.icon()`-based tab resolution; pack registration stays as the forward path.
+- Harness still 60 green (tab class assertion updated).
+
 ## [Unreleased] - Legacy Icon Override (Works on All Builds)
 
 - `helpers.getIconForFile` chaining per the proven material-icons pattern: `.ipynb` resolves to the logo class, everything else delegates untouched; original restored on unload (re-install safe).
