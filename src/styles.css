@@ -1,12 +1,13 @@
-/* Jupyter Notebook Viewer Styles (read-only) */
+/* Jupyter Notebook Viewer Styles (read-only, dark-first) */
 .jupyter-notebook-wrapper {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--theme-color, #333);
+  color: var(--text-color, light-dark(#24292e, #e8eaed));
+  background: var(--background-color, light-dark(#ffffff, #1a1d21));
+  color-scheme: light dark;
   padding: 12px;
   box-sizing: border-box;
-  background: var(--theme-background, transparent);
 }
 
 /* ---- toolbar ---- */
@@ -17,23 +18,22 @@
   gap: 8px;
   padding: 8px 12px;
   margin-bottom: 12px;
-  background: var(--theme-surface-variant, #f5f5f5);
-  border: 1px solid var(--theme-border, #e0e0e0);
+  background: var(--background-color, light-dark(#f2f3f5, #22262b));
+  border: 1px solid var(--border-color, light-dark(#e0e0e0, #3a3f45));
   border-radius: 8px;
   position: sticky;
   top: 0;
   z-index: 10;
   box-sizing: border-box;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .nb-filename {
   align-self: center;
   font-size: 13px;
   font-weight: 700;
-  color: var(--theme-color, #333);
+  color: var(--text-color, light-dark(#24292e, #e8eaed));
   margin-right: auto;
-  max-width: 60vw;
+  max-width: 90vw;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -51,22 +51,20 @@
 .nb-empty {
   padding: 48px 20px;
   text-align: center;
-  color: var(--theme-color-dim, #888);
+  color: var(--text-color, light-dark(#5f6368, #9aa0a6));
   font-style: italic;
 }
 
 .nb-cell {
   position: relative;
   padding: 10px 12px 10px 64px;
-  background: var(--theme-surface, #fff);
-  border: 1px solid var(--theme-border, #e3e3e3);
-  border-left: 3px solid var(--theme-border, #ddd);
+  background: var(--background-color, light-dark(#ffffff, #22262b));
+  border: 1px solid var(--border-color, light-dark(#e3e3e3, #3a3f45));
+  border-left: 3px solid var(--primary-color, light-dark(#0071c1, #4da3ff));
   border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.nb-cell.nb-code { border-left-color: #0071c1; }
-.nb-cell.nb-markdown { border-left-color: #21734b; }
+.nb-cell.nb-markdown { border-left-color: light-dark(#21734b, #3fb27f); }
 
 .nb-prompt {
   position: absolute;
@@ -77,56 +75,73 @@
   font-family: 'Consolas', 'Menlo', monospace;
   font-size: 11px;
   font-weight: 600;
-  color: #0071c1;
-  opacity: 0.85;
+  color: var(--primary-color, light-dark(#0071c1, #4da3ff));
   user-select: none;
 }
 
 .nb-cell-content { position: relative; min-width: 0; }
 
-/* ---- code ---- */
+/* ---- code input ---- */
 .nb-code {
   margin: 0;
   padding: 10px 12px;
-  background: var(--theme-surface-variant, #f6f8fa);
-  border: 1px solid var(--theme-border, #e8e8e8);
+  background: var(--background-color, light-dark(#f6f8fa, #14171a));
+  border: 1px solid var(--border-color, light-dark(#e8e8e8, #33373d));
   border-radius: 6px;
   font-family: 'Consolas', 'Menlo', 'Monaco', monospace;
   font-size: 13px;
   line-height: 1.55;
   overflow-x: auto;
+  overflow-y: auto;
   white-space: pre;
-  color: var(--theme-color, #24292e);
+  max-height: 240px;
+  color: var(--text-color, light-dark(#24292e, #d7dce0));
 }
 
 /* ---- markdown ---- */
-.nb-markdown-preview { padding: 2px 0; line-height: 1.65; color: var(--theme-color, #333); }
+.nb-markdown-preview { padding: 2px 0; line-height: 1.65; }
 .nb-markdown-preview p { margin: 8px 0; }
-.nb-markdown-preview h1 { font-size: 20px; border-bottom: 1px solid var(--theme-border, #ddd); padding-bottom: 6px; margin: 12px 0 8px; }
+.nb-markdown-preview h1 { font-size: 20px; border-bottom: 1px solid var(--border-color, light-dark(#d0d0d0, #3a3f45)); padding-bottom: 6px; margin: 12px 0 8px; }
 .nb-markdown-preview h2 { font-size: 18px; margin: 12px 0 6px; }
 .nb-markdown-preview h3 { font-size: 16px; margin: 10px 0 6px; }
-.nb-markdown-preview code { background: var(--theme-surface-variant, #eee); padding: 2px 5px; border-radius: 4px; font-size: 12px; }
-.nb-markdown-preview pre { background: var(--theme-surface-variant, #f5f5f5); padding: 10px 12px; border-radius: 6px; overflow-x: auto; }
-.nb-markdown-preview pre code { background: none; padding: 0; }
-.nb-markdown-preview blockquote { border-left: 3px solid #0071c1; padding-left: 12px; margin-left: 0; color: var(--theme-color-dim, #666); }
-.nb-markdown-preview a { color: #0071c1; text-decoration: none; }
+.nb-markdown-preview code {
+  background: var(--background-color, light-dark(#eceff1, #2c3138));
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.nb-markdown-preview pre {
+  background: var(--background-color, light-dark(#f6f8fa, #14171a));
+  border: 1px solid var(--border-color, light-dark(#e8e8e8, #33373d));
+  padding: 10px 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+.nb-markdown-preview pre code { background: none; border: none; padding: 0; }
+.nb-markdown-preview blockquote {
+  border-left: 3px solid var(--primary-color, light-dark(#0071c1, #4da3ff));
+  padding-left: 12px;
+  margin-left: 0;
+  color: var(--text-color, light-dark(#5f6368, #b0b6bc));
+}
+.nb-markdown-preview a { color: var(--primary-color, light-dark(#0071c1, #6cb6ff)); text-decoration: none; }
 .nb-markdown-preview a:hover { text-decoration: underline; }
 .nb-markdown-preview table { border-collapse: collapse; margin: 10px 0; font-size: 13px; display: block; overflow-x: auto; }
-.nb-markdown-preview th, .nb-markdown-preview td { border: 1px solid var(--theme-border, #ddd); padding: 6px 10px; text-align: left; }
-.nb-markdown-preview th { background: var(--theme-surface-variant, #f0f0f0); font-weight: 700; }
-.nb-markdown-preview hr { border: none; border-top: 1px solid var(--theme-border, #ddd); margin: 12px 0; }
+.nb-markdown-preview th, .nb-markdown-preview td { border: 1px solid var(--border-color, light-dark(#d0d0d0, #3a3f45)); padding: 6px 10px; text-align: left; }
+.nb-markdown-preview th { background: var(--background-color, light-dark(#eceff1, #2c3138)); font-weight: 700; }
+.nb-markdown-preview hr { border: none; border-top: 1px solid var(--border-color, light-dark(#d0d0d0, #3a3f45)); margin: 12px 0; }
 
 /* ---- outputs ---- */
 .nb-outputs {
   margin-top: 10px;
   padding: 10px 12px;
-  background: var(--theme-background, #fafafa);
-  border: 1px solid var(--theme-border, #eee);
+  background: var(--background-color, light-dark(#fafafa, #1e2227));
+  border: 1px solid var(--border-color, light-dark(#eeeeee, #33373d));
   border-radius: 6px;
 }
 
 .nb-output { padding: 4px 0; }
-.nb-output + .nb-output { border-top: 1px dashed var(--theme-border, #e5e5e5); margin-top: 6px; padding-top: 10px; }
+.nb-output + .nb-output { border-top: 1px dashed var(--border-color, light-dark(#e0e0e0, #3a3f45)); margin-top: 6px; padding-top: 10px; }
 .nb-output pre {
   margin: 0;
   font-family: 'Consolas', 'Menlo', monospace;
@@ -137,33 +152,40 @@
   max-height: 300px;
   overflow-y: auto;
   overflow-x: auto;
+  color: var(--text-color, light-dark(#24292e, #d7dce0));
 }
 
 .nb-error {
-  color: #d32f2f;
-  background: #ffebee;
+  color: light-dark(#b71c1c, #ff8a80);
+  background: light-dark(#ffebee, #3d1f1f);
   padding: 8px 10px;
   border-radius: 6px;
-  border-left: 3px solid #d32f2f;
+  border-left: 3px solid light-dark(#d32f2f, #ff5252);
 }
 
+/* ---- images: white-backed, capped, tap to expand ---- */
 .nb-output-img {
   margin: 8px 0;
   max-width: 100%;
-  max-height: 320px;
+  max-height: 200px;
   overflow: auto;
   text-align: center;
+  cursor: zoom-in;
 }
 .nb-output-img img {
   display: inline-block;
   max-width: 100%;
-  max-height: 320px;
+  max-height: 200px;
   width: auto;
   height: auto;
   object-fit: contain;
   border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  background: #ffffff;
+  padding: 8px;
+  box-sizing: border-box;
 }
+.nb-output-img.expanded { max-height: none; cursor: zoom-out; }
+.nb-output-img.expanded img { max-height: none; }
 
 .nb-output-html {
   margin: 8px 0;
@@ -172,5 +194,5 @@
   overflow: auto;
 }
 .nb-output-html table { border-collapse: collapse; font-size: 12px; }
-.nb-output-html th, .nb-output-html td { border: 1px solid var(--theme-border, #ddd); padding: 5px 9px; text-align: left; }
-.nb-output-html th { background: var(--theme-surface-variant, #f0f0f0); font-weight: 700; }
+.nb-output-html th, .nb-output-html td { border: 1px solid var(--border-color, light-dark(#d0d0d0, #3a3f45)); padding: 5px 9px; text-align: left; }
+.nb-output-html th { background: var(--background-color, light-dark(#eceff1, #2c3138)); font-weight: 700; }

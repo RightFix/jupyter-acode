@@ -55,6 +55,7 @@ export class NotebookUI {
 
     this.$container = wrapper;
     this.$cells = wrapper.querySelector('.nb-cells');
+    if (this.$cells) this.setupImageExpand(this.$cells);
     this.renderCells();
     if (host) {
       host.appendChild(wrapper);
@@ -62,6 +63,20 @@ export class NotebookUI {
       document.querySelector('main')?.appendChild(wrapper);
       this.hideNativeEditor();
     }
+  }
+
+  private setupImageExpand(cells: HTMLElement): void {
+    cells.addEventListener('click', (e: Event) => {
+      let node = e.target as HTMLElement | null;
+      while (node && node !== cells) {
+        if (node.tagName === 'IMG') {
+          const box = node.parentElement;
+          if (box && box.classList.contains('nb-output-img')) box.classList.toggle('expanded');
+          return;
+        }
+        node = node.parentElement as HTMLElement | null;
+      }
+    });
   }
 
   private renderCells(): void {

@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased] - Dark Restyle & Legibility
+
+- Rebuilt palette on Acode's documented vars (`--text-color`, `--background-color`, `--border-color`, `--primary-color`) with dark-first `light-dark()` fallbacks; removed all legacy `--theme-*` names causing the washed-out text.
+- Explicit background+foreground contrast pairs everywhere; no opacity-dimmed text.
+- Plot images on solid white backing, capped at 200px, tap-to-expand to full size.
+- Long code cells capped at 240px with scrolling.
+- Harness at 29 assertions (palette, caps, expand toggle included).
+
 ## [Unreleased] - Real Filenames & Multi-Tab
 
 - Fix opened files showing `notebook.ipynb`: handler now prefers `fileInfo.name` (what Acode actually sends) with basename fallback.
