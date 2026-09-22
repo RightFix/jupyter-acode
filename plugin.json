@@ -6,6 +6,7 @@
   "version": "2.2.3",
   "repository": "https://github.com/RightFix/jupyter-acode.git",
   "icon": "icon.png",
+  "url": "https://localhost/__cdvfile_files-external__/plugins/com.rightfix.jupyter/icons/",
   "minVersionCode": 290,
   "license": "AGPL-3.0",
   "keywords": [

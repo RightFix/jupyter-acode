@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased] - Legacy Icon Override (Works on All Builds)
+
+- `helpers.getIconForFile` chaining per the proven material-icons pattern: `.ipynb` resolves to the logo class, everything else delegates untouched; original restored on unload (re-install safe).
+- Manifest `url` field added so the PNG asset resolves to a servable localhost URL.
+- New-API pack registration kept as the forward path; legacy CSS override covers builds without it.
+- Harness at 60 assertions (intercept, delegate, restore, replace-safe reinstall).
+
 ## [Unreleased] - Canonical Icon Pack Layout
 
 - Icon associations now live in `icons/file_icons.json`, loaded via `fs` per the docs' icon-pack-extension pattern; inline map kept as fallback when packaged JSON is unreadable.

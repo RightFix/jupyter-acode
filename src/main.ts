@@ -5,6 +5,7 @@ import { loadNotebook } from './nbformat';
 import { NotebookUI } from './ui/notebook';
 import { NotebookTabs } from './ui/tabs';
 import { FileHandler, baseName } from './ui/filehandler';
+import { LegacyIcons } from './ui/legacyIcons';
 import { showToast } from './ui/toast';
 import { registerCommands, removeCommands } from './ui/toolbar';
 
@@ -26,6 +27,7 @@ class JupyterPlugin {
   private styleEl: HTMLStyleElement | null = null;
   private fileIcons: FileIconsApi | null = null;
   private iconPack: { dispose(): void } | null = null;
+  private legacyIcons = new LegacyIcons();
   private baseUrl = '';
   private externalSaveHook: ((file: { uri: string }) => void) | null = null;
   private removeFileHook: ((file: { uri: string }) => void) | null = null;
@@ -37,6 +39,9 @@ class JupyterPlugin {
 
     this.injectStyles();
     this.registerIconPack();
+    this.legacyIcons.install(
+      (plugin as { url?: string }).url ?? `${this.baseUrl.endsWith('/') ? this.baseUrl : `${this.baseUrl}/`}icons/`,
+    );
     this.fileHandler = new FileHandler(plugin.id, (info) => this.openFile(info.uri, info.name));
     this.registerAllCommands();
     this.setupEditorHooks();
@@ -187,6 +192,7 @@ class JupyterPlugin {
 
   async destroy(): Promise<void> {
     this.removeStyles();
+    try { this.legacyIcons.uninstall(); } catch { /* ignore */ }
     try { this.iconPack?.dispose(); } catch { /* ignore */ }
     this.iconPack = null;
     try { this.fileHandler?.unregister(); } catch { /* ignore */ }
