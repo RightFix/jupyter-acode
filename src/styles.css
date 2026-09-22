@@ -121,6 +121,13 @@
 
 .nb-foldhead .nb-tag { margin-bottom: 0; }
 
+.nb-foldleft {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .nb-fold {
   background: transparent;
   border: 1px solid var(--border-color, light-dark(#d0d0d0, #3a3f45));
@@ -144,6 +151,7 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 .nb-foldable.collapsed { display: none; }

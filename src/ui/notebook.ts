@@ -160,6 +160,11 @@ export class NotebookUI {
       copyBtn.title = `Copy ${label.toLowerCase()}`;
       copyBtn.setAttribute('aria-label', `Copy ${label.toLowerCase()}`);
       copyBtn.onclick = () => void this.copyBlock(copyText, label.toLowerCase());
+      const left = document.createElement('span');
+      left.className = 'nb-foldleft';
+      left.appendChild(btn);
+      left.appendChild(tag);
+      head.appendChild(left);
       head.appendChild(copyBtn);
     }
     btn.onclick = () => {
