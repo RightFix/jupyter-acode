@@ -8,6 +8,7 @@
   color-scheme: light dark;
   padding: 12px;
   box-sizing: border-box;
+  outline: 4px solid #ff0000; /* CANARY 2.2.2: proves fresh CSS is live; remove after diagnosis */
 }
 
 /* ---- toolbar ---- */
