@@ -3,7 +3,7 @@
   "id": "com.rightfix.jupyter",
   "name": "Jupyter Notebook",
   "main": "main.js",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "repository": "https://github.com/RightFix/jupyter-acode.git",
   "icon": "icon.png",
   "minVersionCode": 290,

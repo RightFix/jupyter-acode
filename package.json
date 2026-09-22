@@ -1,6 +1,6 @@
 {
   "name": "jupyter-acode",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "description": "Read, edit and interact with Jupyter notebooks (.ipynb) in Acode",
   "main": "src/main.ts",
   "repository": "https://github.com/RightFix/jupyter-acode.git",

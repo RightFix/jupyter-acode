@@ -35,6 +35,7 @@ class JupyterPlugin {
     (globalThis as any).editorManager = win.editorManager;
 
     this.injectStyles();
+    acode.toast?.('Jupyter viewer v2.2.3 loaded'); // CANARY: proves fresh JS executes; remove after diagnosis
     this.registerIconPack();
     this.fileHandler = new FileHandler(plugin.id, (info) => this.openFile(info.uri, info.name));
     this.registerAllCommands();
