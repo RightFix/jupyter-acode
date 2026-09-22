@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.0] - Initial Release (Notebook Viewer)
+
+- View `.ipynb` files in real editor tabs: code with execution counts, rendered markdown, saved outputs (stream/error/png/svg/html).
+- IN / OUT / MARKDOWN tags, per-block folding + copy buttons, image tap-expand removed in favor of full-height cells.
+- Dark-first adaptive styling; notebook file icons (pack + legacy override).
+- Read-only (`file:read`); single `jupyter-open` command.
+
 ## [Unreleased] - Tab Icons via tabIcon Option
 
 - Acode renders custom-tab icons verbatim from the `tabIcon` option (never via `helpers.getIconForFile`): tabs now pin `file file_type_default file_type_ipynb` directly, painted by our head-injected CSS on all builds.

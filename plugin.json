@@ -3,7 +3,7 @@
   "id": "com.rightfix.jupyter",
   "name": "Jupyter Notebook",
   "main": "main.js",
-  "version": "2.2.3",
+  "version": "0.1.0",
   "repository": "https://github.com/RightFix/jupyter-acode.git",
   "icon": "icon.png",
   "url": "https://localhost/__cdvfile_files-external__/plugins/com.rightfix.jupyter/icons/",
