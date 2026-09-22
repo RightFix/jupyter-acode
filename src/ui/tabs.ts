@@ -1,3 +1,5 @@
+import notebookCss from '../styles.css';
+
 interface KernelTab extends EditorFileTab {
   content?: HTMLElement | null;
   makeActive(): void;
@@ -25,6 +27,7 @@ export class NotebookTabs {
     const existing = this.tabs.get(uri);
     if (existing) {
       this.clearHost(existing.host);
+      this.ensureStyles(existing.host);
       try { existing.file.makeActive(); } catch { /* ignore */ }
       return existing.host;
     }
@@ -34,6 +37,7 @@ export class NotebookTabs {
       const content = (adopted as { content?: HTMLElement } | undefined)?.content;
       if (adopted && content) {
         this.clearHost(content);
+        this.ensureStyles(content);
         this.track(uri, adopted, content);
         try { adopted.makeActive(); } catch { /* ignore */ }
         return content;
@@ -42,6 +46,7 @@ export class NotebookTabs {
     const host = document.createElement('div');
     host.className = 'jupyter-tab-host';
     host.style.cssText = 'height:100%;display:flex;flex-direction:column;';
+    this.ensureStyles(host);
     const Ctor = acode.require('editorFile') as EditorFileCtor;
     const file = new Ctor(filename, {
       uri,
@@ -64,6 +69,24 @@ export class NotebookTabs {
           this.onClose(uri);
         }
       });
+    } catch { /* ignore */ }
+  }
+
+  /**
+   * Styles live inside the tab host (not just document.head) because
+   * custom tab content is Shadow-DOM isolated — head styles can't reach it.
+   */
+  private ensureStyles(host: HTMLElement): void {
+    try {
+      host.querySelectorAll('style').forEach(el => {
+        if ((el as HTMLElement).getAttribute?.('data-jupyter')) el.remove();
+      });
+    } catch { /* ignore */ }
+    try {
+      const style = document.createElement('style');
+      style.setAttribute('data-jupyter', 'true');
+      style.textContent = notebookCss;
+      host.appendChild(style);
     } catch { /* ignore */ }
   }
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.1.0] - Styles Reach Tabs + Versioned Releases
+
+- Fix styles not applying: custom tab content is Shadow-DOM isolated, so the stylesheet is now injected inside each tab host (head injection kept as fallback).
+- Version bumped to 2.1.0 in `plugin.json`/`package.json` so Acode recognizes updates; versions will bump every release from here on.
+- Harness covers per-tab style injection.
+
 ## [Unreleased] - Dark Restyle & Legibility
 
 - Rebuilt palette on Acode's documented vars (`--text-color`, `--background-color`, `--border-color`, `--primary-color`) with dark-first `light-dark()` fallbacks; removed all legacy `--theme-*` names causing the washed-out text.
