@@ -18,30 +18,3 @@ export function loadNotebook(json: string): NotebookData {
     nbformat_minor: parsed.nbformat_minor ?? 5,
   };
 }
-
-export function saveNotebook(data: NotebookData): string {
-  return JSON.stringify(
-    {
-      cells: data.cells,
-      metadata: data.metadata,
-      nbformat: data.nbformat,
-      nbformat_minor: data.nbformat_minor,
-    },
-    null,
-    2
-  );
-}
-
-export function createNewNotebook(): NotebookData {
-  return {
-    cells: [
-      { cell_type: 'code', source: [], metadata: {}, outputs: [], execution_count: null },
-    ],
-    metadata: {
-      kernelspec: { display_name: 'Python 3', language: 'python', name: 'python3' },
-      language_info: { name: 'python', version: '3' },
-    },
-    nbformat: 4,
-    nbformat_minor: 5,
-  };
-}

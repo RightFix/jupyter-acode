@@ -1,48 +1,31 @@
-# Jupyter Notebook for Acode
+# Jupyter Notebook Viewer for Acode
 
-A powerful extension that allows you to read, edit, and interact with Jupyter notebooks (.ipynb files) directly in Acode mobile editor.
+A lightweight extension that renders Jupyter notebooks (`.ipynb` files) directly in the Acode mobile editor — code, markdown, and saved outputs (text, errors, PNG/SVG images, HTML).
 
 ## Features
 
-- **Full Notebook Viewer**: View .ipynb files with proper cell rendering
-- **Cell Types Support**: Code cells and Markdown cells
-- **Rich Markdown Rendering**: Preview markdown cells with formatted output
-- **Cell Editing**: Edit cell content inline
-- **Cell Operations**: Add, delete, move up/down, toggle cell type
-- **Code Execution**: Run Python code cells (requires Python 3 installed)
-- **Output Display**: View cell outputs including text, errors, and images (png, svg, html)
-- **Python Intellisense**: Autocomplete for Python keywords and built-ins
-- **Keyboard Shortcuts**: All operations accessible via command palette
-- **Save & Export**: Save your changes back to .ipynb format
+- **Notebook Viewer**: open `.ipynb` files from the file browser, command palette, or header `+` button
+- **Real Editor Tabs**: notebooks open as first-class tabs — visible in the file list, switchable, closable
+- **Cell Rendering**: code cells with execution counts, rendered markdown, saved outputs
+- **Output Display**: text streams, tracebacks, inline PNG/SVG images, HTML outputs
+- **Live Reload**: re-renders automatically when the file changes on disk
+- **Read-only**: never modifies your files (edit/run coming later)
 
 ## Usage
 
-1. Open any `.ipynb` file in Acode
-2. The notebook will automatically render in the viewer
-3. Tap on cells to edit
-4. Use the header buttons or menu to manage cells
-5. Type 2+ characters in code cells to see autocomplete suggestions
+1. Open any `.ipynb` file in Acode (or tap the header `+` button)
+2. The notebook renders in its own tab
+3. Use authorship tools (VS Code, Jupyter) to edit and run — reopen to see results
 
-### Keyboard Shortcuts
+### Commands
 
-The following commands are available via command palette:
+The following command is available via command palette:
 
-- `open-notebook-viewer` - Open Jupyter Notebook viewer
-- `add-code-cell` - Add new code cell
-- `add-markdown-cell` - Add new markdown cell
-- `delete-cell` - Delete current cell
-- `move-cell-up` - Move cell up
-- `move-cell-down` - Move cell down
-- `save-notebook` - Save notebook
-- `run-cell` - Run current cell (Ctrl+Enter)
-- `run-all-cells` - Run all cells
-- `toggle-cell-type` - Toggle cell type (code/markdown)
+- `jupyter-open` - Open a Jupyter Notebook file
 
 ## Requirements
 
 - Acode Editor v290+
-- Python 3 (optional, for code execution)
-- Acode Terminal plugin (for code execution)
 
 ## Installation
 

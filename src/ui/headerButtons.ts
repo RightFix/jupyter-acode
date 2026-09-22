@@ -1,5 +1,4 @@
 export interface HeaderButtonCallbacks {
-  onNew: () => void | Promise<void>;
   onOpen: () => void | Promise<void>;
 }
 
@@ -107,13 +106,6 @@ export class HeaderButtons {
   }
 
   private async pick(): Promise<void> {
-    try {
-      const select = acode.require('select') as (title: string, items: string[]) => Promise<string>;
-      const choice = await select('Jupyter Notebook', ['New notebook', 'Open notebook...']);
-      if (choice.startsWith('New')) await this.cbs.onNew();
-      else if (choice.startsWith('Open')) await this.cbs.onOpen();
-    } catch {
-      /* cancelled — stay silent */
-    }
+    await this.cbs.onOpen();
   }
 }

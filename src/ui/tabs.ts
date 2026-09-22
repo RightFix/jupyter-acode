@@ -27,14 +27,17 @@ export class NotebookTabs {
     this.onClose = onClose;
   }
 
-  has(uri: string): boolean {
-    return this.file !== null && this.uri === uri;
+  has(): boolean {
+    return this.file !== null;
   }
 
   open(uri: string | null, filename: string): HTMLElement {
     if (this.file && this.host) {
-      this.retitle(filename);
-      this.setUri(uri);
+      try { this.file.filename = filename; } catch { /* ignore */ }
+      this.uri = uri;
+      if (uri) {
+        try { this.file.uri = uri; } catch { /* ignore */ }
+      }
       this.clearHost(this.host);
       try { this.file.makeActive(); } catch { /* ignore */ }
       return this.host;
@@ -72,17 +75,6 @@ export class NotebookTabs {
     this.uri = uri;
     this.watchClose(file);
     return host;
-  }
-
-  retitle(name: string): void {
-    if (!this.file) return;
-    try { this.file.filename = name; } catch { /* ignore */ }
-  }
-
-  setUri(uri: string | null): void {
-    this.uri = uri;
-    if (!this.file || !uri) return;
-    try { this.file.uri = uri; } catch { /* ignore */ }
   }
 
   private watchClose(file: KernelTab): void {

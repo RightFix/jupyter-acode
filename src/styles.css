@@ -1,4 +1,4 @@
-/* Jupyter Notebook Styles */
+/* Jupyter Notebook Viewer Styles (read-only) */
 .jupyter-notebook-wrapper {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
@@ -16,6 +16,7 @@
   top: 0;
   z-index: 10;
   box-sizing: border-box;
+  align-items: center;
 }
 
 .nb-btn {
@@ -32,35 +33,20 @@
 
 .nb-btn:hover { background: var(--theme-surface-variant, #e8e8e8); }
 
-.nb-btn.save.dirty {
-  border-color: #e0a800;
-  font-weight: bold;
-}
-
 .nb-filename {
   align-self: center;
   font-size: 12px;
   font-weight: 600;
   color: var(--theme-color-dim, #666);
-  margin-right: 4px;
-  max-width: 40vw;
+  margin-right: auto;
+  max-width: 60vw;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.nb-filename.dirty { color: #e0a800; }
-
-.nb-autosave {
-  align-self: center;
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--theme-color-dim, #888);
-  white-space: nowrap;
-}
-
-.nb-cells { 
-  padding: 8px; 
+.nb-cells {
+  padding: 8px;
   box-sizing: border-box;
 }
 
@@ -74,37 +60,8 @@
   background: var(--theme-surface, #fff);
 }
 
-.nb-cell.selected { background: var(--theme-surface-variant, #f7f7f7); }
-.nb-cell.nb-code.selected { border-left-color: #0071c1; }
-.nb-cell.nb-markdown.selected { border-left-color: #21734b; }
-
-.nb-cell-actions {
-  position: absolute;
-  right: 8px;
-  top: 4px;
-  display: none;
-  gap: 4px;
-}
-
-.nb-cell:hover .nb-cell-actions,
-.nb-cell.selected .nb-cell-actions { display: flex; }
-
-.nb-run, .nb-delete {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--theme-surface, #fff);
-  border: 1px solid var(--theme-border, #ddd);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--theme-color, #333);
-}
-
-.nb-run:hover { color: #0071c1; }
-.nb-delete:hover { color: #d32f2f; }
+.nb-cell.nb-code { border-left-color: var(--theme-border, #ddd); }
+.nb-cell.nb-markdown { border-left-color: var(--theme-border, #ddd); }
 
 .nb-prompt {
   position: absolute;
@@ -120,22 +77,18 @@
 
 .nb-cell-content { position: relative; }
 
-.nb-editor {
-  width: 100%;
-  min-height: 30px;
+.nb-code {
+  margin: 0;
   padding: 6px 8px;
   background: var(--theme-surface-variant, #f5f5f5);
-  border: none;
+  border-radius: 4px;
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 13px;
   line-height: 1.5;
-  resize: none;
-  outline: none;
-  overflow: hidden;
+  overflow-x: auto;
+  white-space: pre;
   color: var(--theme-color, #333);
 }
-
-.nb-editor:focus { background: var(--theme-surface, #fff); }
 
 .nb-markdown-preview { padding: 4px 0; line-height: 1.6; color: var(--theme-color, #333); }
 .nb-markdown-preview p { margin: 8px 0; }
@@ -163,7 +116,6 @@
   white-space: pre-wrap;
 }
 
-.nb-running { color: #f57c00; font-style: italic; }
 .nb-error { color: #d32f2f; background: #ffebee; padding: 8px; border-radius: 4px; }
 
 .nb-output-img { margin: 8px 0; }
@@ -174,7 +126,3 @@
 }
 
 .nb-output-html { margin: 8px 0; }
-
-.nb-intellisense { }
-.nb-intellisense-item:hover,
-.nb-intellisense-item.selected { background: var(--theme-surface-variant, #f0f0f0); }

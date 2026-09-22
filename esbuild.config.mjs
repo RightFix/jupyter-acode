@@ -20,7 +20,6 @@ const buildOptions = {
     '.json': 'json',
     '.ts': 'ts',
     '.css': 'text',
-    '.py': 'text',
   },
   define: {
     'process.env.NODE_ENV': isServe ? '"development"' : '"production"',

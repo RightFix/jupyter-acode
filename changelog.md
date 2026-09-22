@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased] - View-only Slimming
+
+- Removed editing, running, and creation: no textareas, kernel, terminal, matplotlib, autosave, backups, or conflict flows.
+- Viewer renders code (static), markdown, and saved outputs (stream/error/png/svg/html).
+- Single `jupyter-open` command; header `+` button opens the picker directly.
+- Read-only manifest permission (`file:read`).
+- Harness rewritten: 20 view-only assertions, all green.
+
 ## [Unreleased] - Notebook Tabs in Active Files
 
 - Open notebooks now live in a real Acode editor tab (custom `EditorFile` with the notebook UI as tab content) instead of a floating overlay — they appear in the file list, switch like normal files, and close like normal files.

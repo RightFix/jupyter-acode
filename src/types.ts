@@ -25,8 +25,3 @@ export interface NotebookData {
   nbformat: number;
   nbformat_minor: number;
 }
-
-export interface KernelResult {
-  outputs: Output[];
-  execution_count: number | null;
-}
