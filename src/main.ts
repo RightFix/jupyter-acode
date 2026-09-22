@@ -119,13 +119,33 @@ class JupyterPlugin {
 
   private registerIconPack(): void {
     if (!this.fileIcons || !this.baseUrl) return; // older Acode — skip silently
+    void this.registerIconPackAsync();
+  }
+
+  private async registerIconPackAsync(): Promise<void> {
+    if (!this.fileIcons || !this.baseUrl) return;
+    const base = this.baseUrl.endsWith('/') ? this.baseUrl : `${this.baseUrl}/`;
+    let fileExtensions: Record<string, string> = { ipynb: 'ipynb' };
     try {
-      const base = this.baseUrl.endsWith('/') ? this.baseUrl : `${this.baseUrl}/`;
+      const fs = acode.require('fs') as (url: string) => {
+        readFile(encoding: string): Promise<unknown>;
+      };
+      const raw = await fs(`${base}icons/file_icons.json`).readFile('utf-8');
+      const parsed = (typeof raw === 'string' ? JSON.parse(raw) : raw) as {
+        fileExtensions?: Record<string, string>;
+      };
+      if (parsed?.fileExtensions && typeof parsed.fileExtensions === 'object') {
+        fileExtensions = parsed.fileExtensions;
+      }
+    } catch {
+      /* packaged JSON unreadable — fall back to the inline map */
+    }
+    try {
       this.iconPack = this.fileIcons.register({
         id: plugin.id,
         name: 'Jupyter',
         icons: { ipynb: { src: `${base}icons/ipynb.png` } },
-        fileExtensions: { ipynb: 'ipynb' },
+        fileExtensions,
       });
       try {
         if (!localStorage.getItem('jupyter-acode:iconpack-hint')) {

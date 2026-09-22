@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased] - Canonical Icon Pack Layout
+
+- Icon associations now live in `icons/file_icons.json`, loaded via `fs` per the docs' icon-pack-extension pattern; inline map kept as fallback when packaged JSON is unreadable.
+- Harness at 53 assertions (both JSON and fallback load paths).
+
 ## [Unreleased] - Copyable Blocks & Fixed Toast Path
 
 - Copy button on every IN / OUT / MARKDOWN block: raw source for code and markdown; streams + plain text + tracebacks for outputs (images skipped).
