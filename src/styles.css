@@ -92,9 +92,7 @@
   font-size: 13px;
   line-height: 1.55;
   overflow-x: auto;
-  overflow-y: auto;
   white-space: pre;
-  max-height: 240px;
   color: var(--text-color, light-dark(#24292e, #d7dce0));
 }
 
@@ -149,8 +147,6 @@
   line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;
-  max-height: 300px;
-  overflow-y: auto;
   overflow-x: auto;
   color: var(--text-color, light-dark(#24292e, #d7dce0));
 }
@@ -163,35 +159,28 @@
   border-left: 3px solid light-dark(#d32f2f, #ff5252);
 }
 
-/* ---- images: white-backed, capped, tap to expand ---- */
+/* ---- images: white-backed, full height ---- */
 .nb-output-img {
   margin: 8px 0;
   max-width: 100%;
-  max-height: 200px;
-  overflow: auto;
+  overflow-x: auto;
   text-align: center;
-  cursor: zoom-in;
 }
 .nb-output-img img {
   display: inline-block;
   max-width: 100%;
-  max-height: 200px;
   width: auto;
   height: auto;
-  object-fit: contain;
   border-radius: 6px;
   background: #ffffff;
   padding: 8px;
   box-sizing: border-box;
 }
-.nb-output-img.expanded { max-height: none; cursor: zoom-out; }
-.nb-output-img.expanded img { max-height: none; }
 
 .nb-output-html {
   margin: 8px 0;
   max-width: 100%;
-  max-height: 320px;
-  overflow: auto;
+  overflow-x: auto;
 }
 .nb-output-html table { border-collapse: collapse; font-size: 12px; }
 .nb-output-html th, .nb-output-html td { border: 1px solid var(--border-color, light-dark(#d0d0d0, #3a3f45)); padding: 5px 9px; text-align: left; }
