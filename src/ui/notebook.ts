@@ -91,11 +91,19 @@ export class NotebookUI {
     content.className = 'nb-cell-content';
 
     if (type === 'markdown') {
+      const tag = document.createElement('div');
+      tag.className = 'nb-tag nb-tag-md';
+      tag.textContent = 'MARKDOWN';
+      content.appendChild(tag);
       const preview = document.createElement('div');
       preview.className = 'nb-markdown-preview';
       preview.innerHTML = renderMarkdown(cell.source);
       content.appendChild(preview);
     } else {
+      const tag = document.createElement('div');
+      tag.className = type === 'code' ? 'nb-tag nb-tag-in' : 'nb-tag nb-tag-raw';
+      tag.textContent = type === 'code' ? 'IN' : 'RAW';
+      content.appendChild(tag);
       const pre = document.createElement('pre');
       pre.className = 'nb-code';
       pre.textContent = Array.isArray(cell.source) ? cell.source.join('') : String(cell.source ?? '');
@@ -107,7 +115,7 @@ export class NotebookUI {
     if (type === 'code' && cell.outputs?.length) {
       const outEl = document.createElement('div');
       outEl.className = 'nb-outputs';
-      outEl.innerHTML = renderOutputs(cell.outputs);
+      outEl.innerHTML = `<div class="nb-tag nb-tag-out">OUT</div>${renderOutputs(cell.outputs)}`;
       el.appendChild(outEl);
     }
     return el;

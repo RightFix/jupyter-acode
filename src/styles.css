@@ -80,6 +80,71 @@
 
 .nb-cell-content { position: relative; min-width: 0; }
 
+/* ---- cell type tags ---- */
+.nb-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color, light-dark(#d0d0d0, #3a3f45));
+  color: var(--text-color, light-dark(#5f6368, #9aa0a6));
+  background: var(--background-color, light-dark(#f2f3f5, #2c3138));
+  user-select: none;
+}
+
+.nb-tag-in {
+  color: var(--primary-color, light-dark(#0071c1, #4da3ff));
+  border-color: var(--primary-color, light-dark(#0071c1, #4da3ff));
+}
+
+.nb-tag-out {
+  color: light-dark(#2e7d32, #7bc47f);
+  border-color: light-dark(#2e7d32, #7bc47f);
+}
+
+.nb-tag-md {
+  color: light-dark(#21734b, #3fb27f);
+  border-color: light-dark(#21734b, #3fb27f);
+}
+
+.nb-tag-raw {
+  color: var(--text-color, light-dark(#5f6368, #9aa0a6));
+}
+
+/* ---- visible scrollbars (scoped: never touch Acode's own UI) ---- */
+.nb-code::-webkit-scrollbar,
+.nb-output pre::-webkit-scrollbar,
+.nb-output-html::-webkit-scrollbar,
+.nb-markdown-preview pre::-webkit-scrollbar,
+.nb-markdown-preview table::-webkit-scrollbar,
+.nb-output-html table::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.nb-code::-webkit-scrollbar-thumb,
+.nb-output pre::-webkit-scrollbar-thumb,
+.nb-output-html::-webkit-scrollbar-thumb,
+.nb-markdown-preview pre::-webkit-scrollbar-thumb,
+.nb-markdown-preview table::-webkit-scrollbar-thumb,
+.nb-output-html table::-webkit-scrollbar-thumb {
+  background: var(--border-color, light-dark(#c1c1c1, #4a4f55));
+  border-radius: 4px;
+}
+
+.nb-code::-webkit-scrollbar-track,
+.nb-output pre::-webkit-scrollbar-track,
+.nb-output-html::-webkit-scrollbar-track,
+.nb-markdown-preview pre::-webkit-scrollbar-track,
+.nb-markdown-preview table::-webkit-scrollbar-track,
+.nb-output-html table::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 /* ---- code input ---- */
 .nb-code {
   margin: 0;

@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] - Cell Type Tags & Visible Scrollbars
+
+- `IN` tag above code inputs, `OUT` above outputs, `MARKDOWN` above markdown (`RAW` fallback), color-coded to match prompts/accents.
+- Scoped `::-webkit-scrollbar` styling (8px, theme-visible thumbs) on all scrollable surfaces — code, output text/HTML, markdown blocks, tables. Never touches Acode's own UI.
+- Harness at 38 assertions.
+
 ## [Unreleased] - Toast Fix, Natural Cell Heights
 
 - Fix toasts never firing: `acode.toast` does not exist per official types; new `showToast` uses `acode.require('toast')` with `window.toast` fallback. Removed both diagnostic canaries.
