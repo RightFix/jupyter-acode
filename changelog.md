@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased] - Remove Header Button
+
+- Removed the header `+` button; notebooks open via file browser, file handler, or `jupyter-open` command.
+
 ## [Unreleased] - View-only Slimming
 
 - Removed editing, running, and creation: no textareas, kernel, terminal, matplotlib, autosave, backups, or conflict flows.

@@ -4,7 +4,6 @@ import { NotebookData } from './types';
 import { loadNotebook } from './nbformat';
 import { NotebookUI } from './ui/notebook';
 import { NotebookTabs } from './ui/tabs';
-import { HeaderButtons } from './ui/headerButtons';
 import { FileHandler } from './ui/filehandler';
 import { registerCommands, removeCommands } from './ui/toolbar';
 
@@ -20,7 +19,6 @@ class JupyterPlugin {
   private currentFile: string | null = null;
   private currentFileName: string | null = null;
   private tabs = new NotebookTabs((uri) => this.onTabClose(uri));
-  private headerButtons: HeaderButtons | null = null;
   private styleEl: HTMLStyleElement | null = null;
   private switchFileHook: ((file: { uri: string }) => void) | null = null;
   private externalSaveHook: ((file: { uri: string }) => void) | null = null;
@@ -34,8 +32,6 @@ class JupyterPlugin {
     this.injectStyles();
     this.fileHandler = new FileHandler(plugin.id, (info) => this.openFile(info.uri, info.name));
     this.registerAllCommands();
-    this.headerButtons = new HeaderButtons({ onOpen: () => this.openPicker() });
-    this.headerButtons.mount();
     this.setupEditorHooks();
   }
 
@@ -127,8 +123,6 @@ class JupyterPlugin {
   }
 
   async destroy(): Promise<void> {
-    try { this.headerButtons?.unmount(); } catch { /* ignore */ }
-    this.headerButtons = null;
     this.removeStyles();
     try { this.fileHandler?.unregister(); } catch { /* ignore */ }
     if (this.switchFileHook) {
