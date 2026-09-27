@@ -62,7 +62,12 @@ interface AcodeModule {
   fileBrowser?(mode: 'file' | 'folder' | 'both', title: string): Promise<{ type: 'file' | 'folder'; url: string; name: string; filename?: string }>;
   fsOperation?(path: string): {
     readFile(encoding: string): Promise<string>;
+    writeFile(content: string | ArrayBuffer): Promise<void>;
+    createFile(name: string, content?: string): Promise<string>;
   };
+  prompt?: (message: string, defaultValue?: string, type?: string, options?: Record<string, unknown>) => Promise<string | null>;
+  confirm?: (title: string, message: string) => Promise<boolean>;
+  select?: (title: string, items: string[] | string[][] | Array<{ value: string; text: string }>, options?: boolean | Record<string, unknown>) => Promise<string>;
   loader?: { create(msg: string, sub: string): { show(): void; hide(): void } };
   alert?: (title: string, msg: string) => void;
   setPluginInit(id: string, fn: (baseUrl: string, $page: any, ctx: any) => Promise<void>): void;

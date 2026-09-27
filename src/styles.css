@@ -298,3 +298,80 @@
 .nb-output-html table { border-collapse: collapse; font-size: 12px; }
 .nb-output-html th, .nb-output-html td { border: 1px solid var(--border-color, light-dark(#d0d0d0, #3a3f45)); padding: 5px 9px; text-align: left; }
 .nb-output-html th { background: var(--background-color, light-dark(#eceff1, #2c3138)); font-weight: 700; }
+
+/* ---- editing: toolbar add buttons ---- */
+.nb-add {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ---- editing: insert dividers (VS Code-style add above/below) ---- */
+.nb-insert {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 1px 0;
+  opacity: 1;
+}
+.nb-cells > .nb-insert:first-child { padding-top: 4px; }
+.nb-cells > .nb-insert:last-child { padding-bottom: 4px; }
+.nb-insert-btn {
+  background: transparent;
+  border: 1px dashed var(--border-color, light-dark(#d0d0d0, #3a3f45));
+  border-radius: 6px;
+  color: var(--text-color, light-dark(#5f6368, #9aa0a6));
+  font-size: 14px;
+  line-height: 1;
+  padding: 1px 12px 3px;
+  cursor: pointer;
+  opacity: 0.55;
+}
+.nb-insert:hover .nb-insert-btn, .nb-insert:focus-within .nb-insert-btn { opacity: 1; }
+.nb-insert-btn:hover {
+  border-color: var(--primary-color, light-dark(#0071c1, #4da3ff));
+  color: var(--primary-color, light-dark(#0071c1, #4da3ff));
+}
+
+/* ---- editing: per-cell actions ---- */
+.nb-cell-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.nb-del:hover {
+  border-color: light-dark(#d32f2f, #ff5252);
+  color: light-dark(#d32f2f, #ff5252);
+}
+.nb-empty-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* ---- editing: textareas ---- */
+.nb-edit {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 64px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.nb-edit:focus {
+  outline: none;
+  border-color: var(--primary-color, light-dark(#0071c1, #4da3ff));
+}
+
+/* ---- editing: markdown edit/preview toggle ---- */
+.nb-md-toggle {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.nb-md-tab.active {
+  border-color: var(--primary-color, light-dark(#0071c1, #4da3ff));
+  color: var(--primary-color, light-dark(#0071c1, #4da3ff));
+  font-weight: 700;
+}
