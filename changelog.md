@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased] - Cell execution via py-runner backend
+## [1.0.0] - Cell execution via py-runner backend
 
 - Run code cells against a `py-runner-serve` backend: per-cell ▶/⏹ button, toolbar Run-all + Stop, `In [*]` prompt while busy.
 - One server session per open notebook (isolated namespaces); sessions closed on tab close and plugin unload; auto-recreate if the server restarted.
