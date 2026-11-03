@@ -12,7 +12,7 @@
 - Commands: `jupyter-setup-backend`, `jupyter-start-server`, `jupyter-server-url` (persisted, health-checked).
 - Graceful degradation without the Terminal plugin: raw commands shown for manual Termux use.
 
-## [Unreleased] - Cell structure editing
+## [1.1.0] - Cell editing + py-runner 0.1.3 compatibility
 
 - Add code/markdown cells above/below any cell (type picker) and at end via toolbar.
 - Delete any cell with confirmation; deleting the last cell is allowed.
@@ -20,6 +20,8 @@
 - New notebook files via `jupyter-new` (folder picker + name prompt).
 - Fold state re-indexed on insert/delete.
 - In-place source editing for code/markdown/raw with auto-grow; markdown Edit/Preview toggle; auto-save debounced + on blur.
+- Default server URL is now `http://localhost:8000` (was `127.0.0.1`): py-runner-kernel 0.1.3+ serves dual-stack, so both hostnames work and IPv6 `::1` clients connect.
+- Verified end-to-end against py-runner-kernel 0.1.3: health, session create, execute (streams, results, tracebacks), interrupt, and session delete.
 
 ## [0.1.0] - Notebook Viewer
 

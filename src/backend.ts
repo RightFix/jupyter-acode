@@ -14,7 +14,7 @@ interface ExecutorApi {
 const LS_URL = 'jupyter-acode:server-url';
 const LS_INSTALLED = 'jupyter-acode:backend-installed';
 
-const DEFAULT_URL = 'http://127.0.0.1:8000';
+const DEFAULT_URL = 'http://localhost:8000';
 const HEALTH_TIMEOUT_MS = 3000;
 const STARTUP_POLLS = 60;
 const POLL_INTERVAL_MS = 500;
